@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation'
 import { ContentPost } from '@/types'
 
 const STATUS_LABELS: Record<string, string> = {
-  draft: 'Juodraštis', review: 'Peržiūroje', approved: 'Patvirtinta',
+  draft: 'JuodraÅ¡tis', review: 'PerÅ¾iÅ«roje', approved: 'Patvirtinta',
   rejected: 'Atmesta', published: 'Paskelbta'
 }
 
@@ -21,7 +21,7 @@ export default function ClientContentPage() {
 
   useEffect(() => {
     async function load() {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: authData } = await supabase.auth.getUser(); const user = authData.user
       if (!user) { router.push('/login'); return }
       const { data: p } = await supabase.from('profiles').select('*, agency:agencies(*)').eq('id', user.id).single()
       if (!p || p.role === 'agency_admin') { router.push('/dashboard'); return }
@@ -51,7 +51,7 @@ export default function ClientContentPage() {
       <div className="main-content" style={{ marginLeft: 240 }}>
         <h1 style={{ fontSize: 22, fontWeight: 600, marginBottom: '1.5rem' }}>Turinys</h1>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          {posts.length === 0 && <div className="card" style={{ textAlign: 'center', color: '#888', padding: '3rem' }}>Kol kas turinio nůra</div>}
+          {posts.length === 0 && <div className="card" style={{ textAlign: 'center', color: '#888', padding: '3rem' }}>Kol kas turinio nÅ¯ra</div>}
           {posts.map(post => (
             <div key={post.id} className="card">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
@@ -67,10 +67,10 @@ export default function ClientContentPage() {
               {post.caption && <p style={{ fontSize: 14, color: '#555', marginBottom: '1rem', lineHeight: 1.6 }}>{post.caption}</p>}
               {post.status === 'review' && (
                 <div style={{ borderTop: '1px solid #f0f0f0', paddingTop: '1rem' }}>
-                  <textarea value={comment[post.id] || ''} onChange={e => setComment(prev => ({ ...prev, [post.id]: e.target.value }))} placeholder="Komentaras agentūrai)(neprivaloma)..." rows={2} style={{ width: '100%', padding: '8px 12px', border: '1px solid #e5e5e5', borderRadius: 8, fontSize: 13, resize: 'vertical', outline: 'none', marginBottom: '0.75rem' }} />
+                  <textarea value={comment[post.id] || ''} onChange={e => setComment(prev => ({ ...prev, [post.id]: e.target.value }))} placeholder="Komentaras agentÅ«rai)(neprivaloma)..." rows={2} style={{ width: '100%', padding: '8px 12px', border: '1px solid #e5e5e5', borderRadius: 8, fontSize: 13, resize: 'vertical', outline: 'none', marginBottom: '0.75rem' }} />
                   <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <button onClick={() => updateStatus(post.id, 'approved')} disabled={loading === post.id} style={{ background: '#EAF3DE', color: '#27500A', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>✓ Patvirinti</button>
-                    <button onClick={() => updateStatus(post.id, 'rejected')} disabled={loading === post.id} style={{ background: '#FCEBEB', color: '#791F1F4', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>✗ Atmesti</button>
+                    <button onClick={() => updateStatus(post.id, 'approved')} disabled={loading === post.id} style={{ background: '#EAF3DE', color: '#27500A', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>â Patvirinti</button>
+                    <button onClick={() => updateStatus(post.id, 'rejected')} disabled={loading === post.id} style={{ background: '#FCEBEB', color: '#791F1F4', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>â Atmesti</button>
                   </div>
                 </div>
               )}
