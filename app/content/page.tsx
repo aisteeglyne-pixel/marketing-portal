@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation'
 import { ContentPost } from '@/types'
 
 const STATUS_LABELS: Record<string, string> = {
-  draft: 'Juodraštis', review: 'Peržiūroje', approved: 'Patvirtinta',
+  draft: 'JuodraÅ¡tis', review: 'PerÅ¾iÅ«roje', approved: 'Patvirtinta',
   rejected: 'Atmesta', published: 'Paskelbta'
 }
 
@@ -24,7 +24,7 @@ export default function ContentPage() {
 
   useEffect(() => {
     async function load() {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: authData } = await supabase.auth.getUser(); const user = authData.user
       if (!user) { router.push('/login'); return }
       const { data: p } = await supabase.from('profiles').select('*, agency:agencies(*)').eq('id', user.id).single()
       if (!p || p.role !== 'agency_admin') { router.push('/client-home'); return }
@@ -50,7 +50,7 @@ export default function ContentPage() {
       <div className="main-content" style={{ marginLeft: 240 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
           <h1 style={{ fontSize: 22, fontWeight: 600 }}>Turinys</h1>
-          <button className="btn-primary">+ Naujas įrašas</button>
+          <button className="btn-primary">+ Naujas Ä¯raÅ¡as</button>
         </div>
 
         <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
