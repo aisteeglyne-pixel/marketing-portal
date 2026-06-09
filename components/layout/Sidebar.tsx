@@ -22,7 +22,7 @@ const clientNav = [
   { href: '/client-tasks', label: 'Užduotys', icon: '✓' },
   { href: '/client-reports', label: 'Ataskaitos', icon: '📊' },
   { href: '/client-files', label: 'Failai', icon: '📁' },
-  { href: '/client-goals',�label: 'Tikslai', icon: '🎯' },
+  { href: '/client-goals', label: 'Tikslai', icon: '🎯' },
 ]
 
 interface SidebarProps {
