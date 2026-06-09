@@ -11,7 +11,7 @@ export default function Page() {
 
   useEffect(() => {
     async function load() {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: authData } = await supabase.auth.getUser(); const user = authData.user
       if (!user) { router.push('/login'); return }
       const { data: p } = await supabase.from('profiles').select('*, agency:agencies(*)').eq('id', user.id).single()
       if (!p) { router.push('/login'); return }
@@ -27,7 +27,7 @@ export default function Page() {
       <Sidebar role={profile.role} agencyName={profile.agency?.name} agencyLogo={profile.agency?.logo_url} />
       <div className="main-content" style={{ marginLeft: 240 }}>
         <h1 style={{ fontSize: 22, fontWeight: 600 }}>files</h1>
-        <p style={{ color: '#888', marginTop: '0.5rem' }}>Šis puslapis kuriamas...</p>
+        <p style={{ color: '#888', marginTop: '0.5rem' }}>Å is puslapis kuriamas...</p>
       </div>
     </div>
   )
