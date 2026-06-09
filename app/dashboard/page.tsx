@@ -13,7 +13,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     async function load() {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: authData } = await supabase.auth.getUser(); const user = authData.user
       if (!user) { router.push('/login'); return }
 
       const { data: p } = await supabase
@@ -41,14 +41,14 @@ export default function DashboardPage() {
     <div style={{ display: 'flex' }}>
       <Sidebar role="agency_admin" agencyName={profile.agency?.name} agencyLogo={profile.agency?.logo_url} />
       <div className="main-content" style={{ marginLeft: 240 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 600, marginBottom: '0.5rem' }}>Apſvalga</h1>
+        <h1 style={{ fontSize: 22, fontWeight: 600, marginBottom: '0.5rem' }}>ApÅ¿valga</h1>
         <p style={{ color: '#888', marginBottom: '2rem' }}>Sveiki, {profile.full_name || profile.email}</p>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
           {[
-            { label: 'Aktyvūs klientai', value: stats.clients, color: '#534AB7' },
+            { label: 'AktyvÅ«s klientai', value: stats.clients, color: '#534AB7' },
             { label: 'Laukia patvirtinimo', value: stats.content, color: '#BA7517' },
-            { label: 'Aktyvios užduotys', value: stats.tasks, color: '#0F6E56' },
+            { label: 'Aktyvios uÅ¾duotys', value: stats.tasks, color: '#0F6E56' },
           ].map(s => (
             <div key={s.label} className="card" style={{ textAlign: 'center' }}>
               <div style={{ fontSize: 36, fontWeight: 700, color: s.color }}>{s.value}</div>
@@ -61,13 +61,13 @@ export default function DashboardPage() {
           <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: '1rem' }}>Greiti veiksmai</h2>
           <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
             <a href="/content" className="btn-primary" style={{ textDecoration: 'none' }}>
-              Peržiūrėti turinį
+              PerÅ¾iÅ«rÄti turinÄ¯
             </a>
             <a href="/clients" className="btn-secondary" style={{ textDecoration: 'none' }}>
               Valdyti klientus
             </a>
             <a href="/tasks" className="btn-secondary" style={{ textDecoration: 'none' }}>
-              ſiūrėti užduotis
+              Å¿iÅ«rÄti uÅ¾duotis
             </a>
           </div>
         </div>
