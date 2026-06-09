@@ -13,7 +13,7 @@ export default function ClientHomePage() {
 
   useEffect(() => {
     async function load() {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: authData } = await supabase.auth.getUser(); const user = authData.user
       if (!user) { router.push('/login'); return }
 
       const { data: p } = await supabase
@@ -51,7 +51,7 @@ export default function ClientHomePage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
           {[
             { label: 'Laukia patvirtinimo', value: stats.pending, href: '/client-content', color: '#BA7517' },
-            { label: 'Aktyvios užduotys', value: stats.tasks, href: '/client-tasks', color: '#534AB7' },
+            { label: 'Aktyvios uÅ¾duotys', value: stats.tasks, href: '/client-tasks', color: '#534AB7' },
             { label: 'Tikslai', value: stats.goals, href: '/client-goals', color: '#0F6E56' },
           ].map(s => (
             <a key={s.label} href={s.href} className="card"
@@ -65,9 +65,9 @@ export default function ClientHomePage() {
         <div className="card">
           <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: '1rem' }}>Greita navigacija</h2>
           <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-            <a href="/client-content" className="btn-primary" style={{ textDecoration: 'none' }}>Peržiūrėti turinį</a>
-            <a href="/client-tasks" className="btn-secondary" style={{ textDecoration: 'none' }}>Mano užduotys</a>
-            <a href="/client-files" className="btn-secondary" style={{ textDecoration: 'none' }}>Įkelti failus</a>
+            <a href="/client-content" className="btn-primary" style={{ textDecoration: 'none' }}>PerÅ¾iÅ«rÄti turinÄ¯</a>
+            <a href="/client-tasks" className="btn-secondary" style={{ textDecoration: 'none' }}>Mano uÅ¾duotys</a>
+            <a href="/client-files" className="btn-secondary" style={{ textDecoration: 'none' }}>Ä®kelti failus</a>
           </div>
         </div>
       </div>
