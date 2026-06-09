@@ -7,10 +7,10 @@ import { useRouter } from 'next/navigation'
 import { Task } from '@/types'
 
 const STATUS_LABELS: Record<string, string> = {
-  backlog: 'Eilėje', in_progress: 'Vykdoma', review: 'Peržiūroje', done: 'Atlikta'
+  backlog: 'EilÄje', in_progress: 'Vykdoma', review: 'PerÅ¾iÅ«roje', done: 'Atlikta'
 }
 const PRIORITY_LABELS: Record<string, string> = {
-  low: 'Žema', medium: 'Vidutinė', high: 'Aukšta'
+  low: 'Å½ema', medium: 'VidutinÄ', high: 'AukÅ¡ta'
 }
 const PRIORITY_COLORS: Record<string, string> = {
   low: '#888', medium: '#BA7517', high: '#A32D2D'
@@ -26,7 +26,7 @@ export default function ClientTasksPage() {
 
   useEffect(() => {
     async function load() {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: authData } = await supabase.auth.getUser(); const user = authData.user
       if (!user) { router.push('/login'); return }
       const { data: p } = await supabase.from('profiles').select('*, agency:agencies(*)').eq('id', user.id).single()
       if (!p || p.role === 'agency_admin') { router.push('/dashboard'); return }
@@ -64,33 +64,33 @@ export default function ClientTasksPage() {
       <Sidebar role="client" agencyName={profile.agency?.name} agencyLogo={profile.agency?.logo_url} />
       <div className="main-content" style={{ marginLeft: 240 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-          <h1 style={{ fontSize: 22, fontWeight: 600 }}>Užduotys</h1>
+          <h1 style={{ fontSize: 22, fontWeight: 600 }}>UÅ¾duotys</h1>
           <button className="btn-primary" onClick={() => setShowForm(!showForm)}>
-            + Nauja užklausa
+            + Nauja uÅ¾klausa
           </button>
         </div>
 
         {showForm && (
           <div className="card" style={{ marginBottom: '1.5rem' }}>
-            <h3 style={{ fontWeight: 600, marginBottom: '1rem' }}>Nauja užklausa agentūrai</h3>
+            <h3 style={{ fontWeight: 600, marginBottom: '1rem' }}>Nauja uÅ¾klausa agentÅ«rai</h3>
             <form onSubmit={submitRequest} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               <input
                 value={newTask.title}
                 onChange={e => setNewTask(p => ({ ...p, title: e.target.value }))}
-                placeholder="Užklausos pavadinimas"
+                placeholder="UÅ¾klausos pavadinimas"
                 required
                 style={{ padding: '9px 12px', border: '1px solid #e5e5e5', borderRadius: 8, fontSize: 14, outline: 'none' }}
               />
               <textarea
                 value={newTask.description}
                 onChange={e => setNewTask(p => ({ ...p, description: e.target.value }))}
-                placeholder="Aprašymas (neprivaloma)"
+                placeholder="ApraÅ¡ymas (neprivaloma)"
                 rows={3}
                 style={{ padding: '9px 12px', border: '1px solid #e5e5e5', borderRadius: 8, fontSize: 14, outline: 'none', resize: 'vertical' }}
               />
               <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button type="submit" className="btn-primary">Siųsti</button>
-                <button type="button" className="btn-secondary" onClick={() => setShowForm(false)}>Atšaukti</button>
+                <button type="submit" className="btn-primary">SiÅ³sti</button>
+                <button type="button" className="btn-secondary" onClick={() => setShowForm(false)}>AtÅ¡aukti</button>
               </div>
             </form>
           </div>
