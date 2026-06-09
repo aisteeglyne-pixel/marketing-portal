@@ -14,7 +14,7 @@ export default function ClientGoalsPage() {
 
   useEffect(() => {
     async function load() {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: authData } = await supabase.auth.getUser(); const user = authData.user
       if (!user) { router.push('/login'); return }
       const { data: p } = await supabase.from('profiles').select('*, agency:agencies(*)').eq('id', user.id).single()
       if (!p || p.role === 'agency_admin') { router.push('/dashboard'); return }
@@ -35,7 +35,7 @@ export default function ClientGoalsPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' }}>
           {goals.length === 0 && (
             <div className="card" style={{ textAlign: 'center', color: '#888', padding: '3rem', gridColumn: '1 / -1' }}>
-              Tikslų kol kas nėra. Agentūra juos nustatys.
+              TikslÅ³ kol kas nÄra. AgentÅ«ra juos nustatys.
             </div>
           )}
           {goals.map(goal => {
