@@ -21,7 +21,7 @@ export default function ClientFilesPage() {
 
   useEffect(() => {
     async function load() {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: authData } = await supabase.auth.getUser(); const user = authData.user
       if (!user) { router.push('/login'); return }
       const { data: p } = await supabase.from('profiles').select('*, agency:agencies(*)').eq('id', user.id).single()
       if (!p || p.role === 'agency_admin') { router.push('/dashboard'); return }
@@ -58,23 +58,23 @@ export default function ClientFilesPage() {
       <div className="main-content" style={{ marginLeft: 240 }}>
         <h1 style={{ fontSize: 22, fontWeight: 600, marginBottom: '1.5rem' }}>Failai</h1>
         <div className="card" style={{ marginBottom: '1.5rem' }}>
-          <h3 style={{ fontWeight: 600, marginBottom: '1rem' }}>Ěkelti failą</h3>
+          <h3 style={{ fontWeight: 600, marginBottom: '1rem' }}>Äkelti failÄ</h3>
           <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
             <input value={folder} onChange={e => setFolder(e.target.value)} placeholder="Aplankas (neprivaloma)" style={{ padding: '8px 12px', border: '1px solid #e5e5e5', borderRadius: 8, fontSize: 13, outline: 'none' }} />
             <input ref={fileRef} type="file" onChange={handleUpload} style={{ display: 'none' }} />
-            <button className="btn-primary" onClick={() => fileRef.current?.click()} disabled={uploading}>{uploading ? 'Keliama...' : '↑ Pasirinkti failą'}</button>
+            <button className="btn-primary" onClick={() => fileRef.current?.click()} disabled={uploading}>{uploading ? 'Keliama...' : 'â Pasirinkti failÄ'}</button>
           </div>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '0.75rem' }}>
-          {files.length === 0 && <div className="card" style={{ textAlign: 'center', color: '#888', padding: '2rem', gridColumn: '1 / -1' }}>Failų dar nėra</div>}
+          {files.length === 0 && <div className="card" style={{ textAlign: 'center', color: '#888', padding: '2rem', gridColumn: '1 / -1' }}>FailÅ³ dar nÄra</div>}
           {files.map(file => (
             <div key={file.id} className="card" style={{ padding: '1rem' }}>
               <div style={{ fontSize: 28, marginBottom: '0.5rem' }}>
-                {file.file_type === 'video' ? '🎥' : file.file_type === 'photo' ? '🖼' : file.file_type === 'brand' ? '✦' : '📄'}
+                {file.file_type === 'video' ? 'ð¥' : file.file_type === 'photo' ? 'ð¼' : file.file_type === 'brand' ? 'â¦' : 'ð'}
               </div>
               <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 4, wordBreak: 'break-word' }}>{file.file_name}</div>
-              <div style={{ fontSize: 11, color: '#888', marginBottom: '0.75rem' }}>{TYPE_LABELS[file.file_type]}{file.folder ? ` · ${file.folder}` : ''}</div>
-              <a href={file.file_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: 'var(--brand-600)', textDecoration: 'none' }}>↓ Atsisiųsti</a>
+              <div style={{ fontSize: 11, color: '#888', marginBottom: '0.75rem' }}>{TYPE_LABELS[file.file_type]}{file.folder ? ` Â· ${file.folder}` : ''}</div>
+              <a href={file.file_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: 'var(--brand-600)', textDecoration: 'none' }}>â AtsisiÅ³sti</a>
             </div>
           ))}
         </div>
