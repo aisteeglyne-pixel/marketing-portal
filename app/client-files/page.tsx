@@ -11,6 +11,48 @@ const FILE_ICONS: Record<string, string> = {
   video: '🎬', photo: '🖼️', doc: '📄', brand: '🎨',
 }
 
+function FileGrid({ files }: { files: FileRecord[] }) {
+  // Grupuoti pagal aplanką
+  const grouped: Record<string, FileRecord[]> = {}
+  files.forEach(f => {
+    const key = f.folder || '—'
+    if (!grouped[key]) grouped[key] = []
+    grouped[key].push(f)
+  })
+  const folders = Object.keys(grouped).sort((a, b) => a === '—' ? 1 : b === '—' ? -1 : a.localeCompare(b))
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+      {folders.map(folderName => (
+        <div key={folderName}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '0.75rem' }}>
+            <span style={{ fontSize: 16 }}>{folderName === '—' ? '📁' : '📂'}</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: '#555' }}>
+              {folderName === '—' ? 'Be aplanko' : folderName}
+            </span>
+            <span style={{ fontSize: 12, color: '#aaa' }}>({grouped[folderName].length})</span>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '0.75rem' }}>
+            {grouped[folderName].map(file => (
+              <div key={file.id} className="card" style={{ padding: '1rem' }}>
+                <div style={{ fontSize: 28, marginBottom: '0.5rem' }}>{FILE_ICONS[file.file_type] || '📎'}</div>
+                <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 4, wordBreak: 'break-word' }}>{file.file_name}</div>
+                <div style={{ fontSize: 11, color: '#888', marginBottom: '0.75rem' }}>
+                  {lt.clientFiles.types[file.file_type as keyof typeof lt.clientFiles.types] || file.file_type}
+                </div>
+                <a href={file.file_url} target="_blank" rel="noopener noreferrer"
+                  style={{ fontSize: 12, color: 'var(--brand-600)', textDecoration: 'none' }}>
+                  {lt.clientFiles.download}
+                </a>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export default function ClientFilesPage() {
   const [profile, setProfile] = useState<any>(null)
   const [files, setFiles] = useState<FileRecord[]>([])
@@ -40,7 +82,10 @@ export default function ClientFilesPage() {
     if (!file || !profile) return
     setUploading(true)
     const ext = file.name.split('.').pop()
-    const path = `${profile.client_id}/${Date.now()}.${ext}`
+    const folderName = folder.trim()
+    const path = folderName
+      ? `${profile.client_id}/${folderName}/${Date.now()}.${ext}`
+      : `${profile.client_id}/${Date.now()}.${ext}`
     const { data: upload, error } = await supabase.storage.from('client-files').upload(path, file)
     if (!error && upload) {
       const { data: { publicUrl } } = supabase.storage.from('client-files').getPublicUrl(path)
@@ -86,31 +131,13 @@ export default function ClientFilesPage() {
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '0.75rem' }}>
-          {files.length === 0 && (
-            <div className="card" style={{ textAlign: 'center', color: '#888', padding: '2rem', gridColumn: '1 / -1' }}>
-              {lt.clientFiles.noFiles}
-            </div>
-          )}
-          {files.map(file => (
-            <div key={file.id} className="card" style={{ padding: '1rem' }}>
-              <div style={{ fontSize: 28, marginBottom: '0.5rem' }}>
-                {FILE_ICONS[file.file_type] || '📎'}
-              </div>
-              <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 4, wordBreak: 'break-word' }}>
-                {file.file_name}
-              </div>
-              <div style={{ fontSize: 11, color: '#888', marginBottom: '0.75rem' }}>
-                {lt.clientFiles.types[file.file_type as keyof typeof lt.clientFiles.types] || file.file_type}
-                {file.folder ? ` ${lt.clientFiles.folderSep} ${file.folder}` : ''}
-              </div>
-              <a href={file.file_url} target="_blank" rel="noopener noreferrer"
-                style={{ fontSize: 12, color: 'var(--brand-600)', textDecoration: 'none' }}>
-                {lt.clientFiles.download}
-              </a>
-            </div>
-          ))}
-        </div>
+        {files.length === 0 ? (
+          <div className="card" style={{ textAlign: 'center', color: '#888', padding: '2rem' }}>
+            {lt.clientFiles.noFiles}
+          </div>
+        ) : (
+          <FileGrid files={files} />
+        )}
       </div>
     </div>
   )

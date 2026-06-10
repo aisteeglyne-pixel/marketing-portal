@@ -174,7 +174,10 @@ export default function ClientDetailPage() {
     if (!file || !profile) return
     setUploading(true)
     const ext = file.name.split('.').pop()
-    const path = `${clientId}/${Date.now()}.${ext}`
+    const folder = uploadFolder.trim()
+    const path = folder
+      ? `${clientId}/${folder}/${Date.now()}.${ext}`
+      : `${clientId}/${Date.now()}.${ext}`
     const { data: upload, error } = await supabase.storage.from('client-files').upload(path, file)
     if (!error && upload) {
       const { data: { publicUrl } } = supabase.storage.from('client-files').getPublicUrl(path)
