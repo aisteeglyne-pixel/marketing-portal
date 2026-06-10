@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
+import { lt } from '@/lib/i18n/lt'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -17,7 +18,7 @@ export default function LoginPage() {
     setLoading(true)
     setError('')
     const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password })
-    if (authError) { setError('Neteisingas el. paÅ¡tas arba slaptaÅ¾odis'); setLoading(false); return }
+    if (authError) { setError(lt.login.errorMessage); setLoading(false); return }
     if (data.user) {
       const { data: profile } = await supabase.from('profiles').select('role').eq('id', data.user.id).single()
       router.push(profile?.role === 'agency_admin' ? '/dashboard' : '/client-home')
@@ -31,20 +32,29 @@ export default function LoginPage() {
           <div style={{ width: 48, height: 48, borderRadius: 12, background: 'var(--brand-600)', margin: '0 auto 1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <svg width="24" height="24" fill="none" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
           </div>
-          <h1 style={{ fontSize: 22, fontWeight: 600 }}>KlientÅ³ portalas</h1>
-          <p style={{ color: '#888', fontSize: 14, marginTop: 4 }}>Prisijunkite prie savo paskyros</p>
+          <h1 style={{ fontSize: 22, fontWeight: 600 }}>{lt.login.title}</h1>
+          <p style={{ color: '#888', fontSize: 14, marginTop: 4 }}>{lt.login.subtitle}</p>
         </div>
         <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div>
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 6, color: '#444' }}>El. paÅ¡tas</label>
-            <input type="email" value={email} onChange={e => setEmail(e.target.value)} required style={{ width: '100%', padding: '10px 12px', border: '1px solid #e5e5e5', borderRadius: 8, fontSize: 14, outline: 'none' }} placeholder="vardas@imone.lt" />
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 6, color: '#444' }}>{lt.login.emailLabel}</label>
+            <input type="email" value={email} onChange={e => setEmail(e.target.value)} required
+              style={{ width: '100%', padding: '10px 12px', border: '1px solid #e5e5e5', borderRadius: 8, fontSize: 14, outline: 'none' }}
+              placeholder={lt.login.emailPlaceholder} />
           </div>
           <div>
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 6, color: '#444' }}>SlaptaÅ¾odis</label>
-            <input type="password" value={password} onChange={e => setPassword(e.target.value)} required style={{ width: '100%', padding: '10px 12px', border: '1px solid #e5e5e5', borderRadius: 8, fontSize: 14, outline: 'none' }} placeholder="â¢â¢â¢â¢â¢â¢â¢â¢" />
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 6, color: '#444' }}>{lt.login.passwordLabel}</label>
+            <input type="password" value={password} onChange={e => setPassword(e.target.value)} required
+              style={{ width: '100%', padding: '10px 12px', border: '1px solid #e5e5e5', borderRadius: 8, fontSize: 14, outline: 'none' }}
+              placeholder="••••••••" />
           </div>
-          {error && <div style={{ background: '#FCEBEB', color: '#791F1F', padding: '10px 12px', borderRadius: 8, fontSize: 13 }}>{error}</div>}
-          <button type="submit" className="btn-primary" disabled={loading} style={{ width: '100%', padding: '11px', fontSize: 15, marginTop: 4 }}>{loading ? 'Jungiamasi...' : 'Prisijungti'}</button>
+          {error && (
+            <div style={{ background: '#FCEBEB', color: '#791F1F', padding: '10px 12px', borderRadius: 8, fontSize: 13 }}>{error}</div>
+          )}
+          <button type="submit" className="btn-primary" disabled={loading}
+            style={{ width: '100%', padding: '11px', fontSize: 15, marginTop: 4 }}>
+            {loading ? lt.login.submittingButton : lt.login.submitButton}
+          </button>
         </form>
       </div>
     </div>

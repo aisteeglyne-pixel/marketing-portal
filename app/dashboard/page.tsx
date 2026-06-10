@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import Sidebar from '@/components/layout/Sidebar'
 import { useRouter } from 'next/navigation'
+import { lt } from '@/lib/i18n/lt'
 
 export default function DashboardPage() {
   const [profile, setProfile] = useState<any>(null)
@@ -13,7 +14,8 @@ export default function DashboardPage() {
 
   useEffect(() => {
     async function load() {
-      const { data: authData } = await supabase.auth.getUser(); const user = authData.user
+      const { data: authData } = await supabase.auth.getUser()
+      const user = authData.user
       if (!user) { router.push('/login'); return }
 
       const { data: p } = await supabase
@@ -35,20 +37,20 @@ export default function DashboardPage() {
     load()
   }, [])
 
-  if (!profile) return <div style={{ padding: '2rem' }}>Kraunama...</div>
+  if (!profile) return <div style={{ padding: '2rem' }}>{lt.common.loading}</div>
 
   return (
     <div style={{ display: 'flex' }}>
       <Sidebar role="agency_admin" agencyName={profile.agency?.name} agencyLogo={profile.agency?.logo_url} />
       <div className="main-content" style={{ marginLeft: 240 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 600, marginBottom: '0.5rem' }}>ApÅ¿valga</h1>
-        <p style={{ color: '#888', marginBottom: '2rem' }}>Sveiki, {profile.full_name || profile.email}</p>
+        <h1 style={{ fontSize: 22, fontWeight: 600, marginBottom: '0.5rem' }}>{lt.dashboard.title}</h1>
+        <p style={{ color: '#888', marginBottom: '2rem' }}>{lt.dashboard.greeting}, {profile.full_name || profile.email}</p>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
           {[
-            { label: 'AktyvÅ«s klientai', value: stats.clients, color: '#534AB7' },
-            { label: 'Laukia patvirtinimo', value: stats.content, color: '#BA7517' },
-            { label: 'Aktyvios uÅ¾duotys', value: stats.tasks, color: '#0F6E56' },
+            { label: lt.dashboard.stats.activeClients, value: stats.clients, color: '#534AB7' },
+            { label: lt.dashboard.stats.pendingApproval, value: stats.content, color: '#BA7517' },
+            { label: lt.dashboard.stats.activeTasks, value: stats.tasks, color: '#0F6E56' },
           ].map(s => (
             <div key={s.label} className="card" style={{ textAlign: 'center' }}>
               <div style={{ fontSize: 36, fontWeight: 700, color: s.color }}>{s.value}</div>
@@ -58,16 +60,16 @@ export default function DashboardPage() {
         </div>
 
         <div className="card">
-          <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: '1rem' }}>Greiti veiksmai</h2>
+          <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: '1rem' }}>{lt.dashboard.quickActions.title}</h2>
           <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
             <a href="/content" className="btn-primary" style={{ textDecoration: 'none' }}>
-              PerÅ¾iÅ«rÄti turinÄ¯
+              {lt.dashboard.quickActions.viewContent}
             </a>
             <a href="/clients" className="btn-secondary" style={{ textDecoration: 'none' }}>
-              Valdyti klientus
+              {lt.dashboard.quickActions.manageClients}
             </a>
             <a href="/tasks" className="btn-secondary" style={{ textDecoration: 'none' }}>
-              Å¿iÅ«rÄti uÅ¾duotis
+              {lt.dashboard.quickActions.viewTasks}
             </a>
           </div>
         </div>
