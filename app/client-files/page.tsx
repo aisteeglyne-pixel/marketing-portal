@@ -110,7 +110,7 @@ export default function ClientFilesPage() {
     if (fileRef.current) fileRef.current.value = ''
   }
 
-  const existingFolders = [...new Set(files.map(f => f.folder).filter(Boolean))] as string[]
+  const existingFolders = files.map(f => f.folder).filter((f): f is string => !!f).filter((f, i, arr) => arr.indexOf(f) === i)
 
   if (!profile) return <div style={{ padding: '2rem' }}>{lt.common.loading}</div>
 
