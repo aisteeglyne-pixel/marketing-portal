@@ -65,10 +65,6 @@ export default function ClientGoalsPage() {
                     </span>
                   </div>
 
-                  {goal.description && (
-                    <p style={{ fontSize: 13, color: '#666', margin: '0 0 10px' }}>{goal.description}</p>
-                  )}
-
                   <div style={{ background: '#f0f0f0', borderRadius: 99, height: 8, overflow: 'hidden', marginBottom: 8 }}>
                     <div style={{
                       height: '100%',
