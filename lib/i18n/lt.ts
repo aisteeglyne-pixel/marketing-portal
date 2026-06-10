@@ -188,6 +188,55 @@ export const lt = {
       published: 'Paskelbta',
     },
   },
+  clientTasks: {
+    title: 'Užduotys',
+    newRequest: '+ Nauja užklausa',
+    formTitle: 'Nauja užklausa agentūrai',
+    titlePlaceholder: 'Užklausos pavadinimas',
+    descPlaceholder: 'Aprašymas (neprivaloma)',
+    submit: 'Siųsti',
+    cancel: 'Atšaukti',
+    statuses: {
+      backlog: 'Eilėje',
+      in_progress: 'Vykdoma',
+      review: 'Peržiūroje',
+      done: 'Atlikta',
+    },
+    priorities: {
+      low: 'Žema',
+      medium: 'Vidutinė',
+      high: 'Aukšta',
+    },
+  },
+
+  clientFiles: {
+    title: 'Failai',
+    uploadTitle: 'Įkelti failą',
+    folderPlaceholder: 'Aplankas (neprivaloma)',
+    selectFile: '↑ Pasirinkti failą',
+    uploading: 'Keliama...',
+    noFiles: 'Failų dar nėra',
+    download: '↓ Atsisiųsti',
+    folderSep: '·',
+    types: {
+      video: 'Video',
+      photo: 'Nuotrauka',
+      doc: 'Dokumentas',
+      brand: 'Brandas',
+    },
+  },
+
+  clientGoals: {
+    title: 'Tikslai',
+    noGoals: 'Tikslų kol kas nėra. Agentūra juos nustatys.',
+    deadline: 'iki',
+    metric: 'Metrika:',
+  },
+
+  clientReports: {
+    title: 'Ataskaitos',
+  },
+
   calendar: {
     title: 'Turinio kalendorius',
     prev: '←',

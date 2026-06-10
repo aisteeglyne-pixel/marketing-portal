@@ -5,15 +5,10 @@ import { createClient } from '@/lib/supabase'
 import Sidebar from '@/components/layout/Sidebar'
 import { useRouter } from 'next/navigation'
 import { Task } from '@/types'
+import { lt } from '@/lib/i18n/lt'
 
-const STATUS_LABELS: Record<string, string> = {
-  backlog: 'EilÄje', in_progress: 'Vykdoma', review: 'PerÅ¾iÅ«roje', done: 'Atlikta'
-}
-const PRIORITY_LABELS: Record<string, string> = {
-  low: 'Å½ema', medium: 'VidutinÄ', high: 'AukÅ¡ta'
-}
 const PRIORITY_COLORS: Record<string, string> = {
-  low: '#888', medium: '#BA7517', high: '#A32D2D'
+  low: '#888', medium: '#BA7517', high: '#A32D2D',
 }
 
 export default function ClientTasksPage() {
@@ -26,7 +21,8 @@ export default function ClientTasksPage() {
 
   useEffect(() => {
     async function load() {
-      const { data: authData } = await supabase.auth.getUser(); const user = authData.user
+      const { data: authData } = await supabase.auth.getUser()
+      const user = authData.user
       if (!user) { router.push('/login'); return }
       const { data: p } = await supabase.from('profiles').select('*, agency:agencies(*)').eq('id', user.id).single()
       if (!p || p.role === 'agency_admin') { router.push('/dashboard'); return }
@@ -55,42 +51,42 @@ export default function ClientTasksPage() {
     setShowForm(false)
   }
 
-  const columns = ['backlog', 'in_progress', 'review', 'done']
+  const columns = ['backlog', 'in_progress', 'review', 'done'] as const
 
-  if (!profile) return <div style={{ padding: '2rem' }}>Kraunama...</div>
+  if (!profile) return <div style={{ padding: '2rem' }}>{lt.common.loading}</div>
 
   return (
     <div style={{ display: 'flex' }}>
       <Sidebar role="client" agencyName={profile.agency?.name} agencyLogo={profile.agency?.logo_url} />
       <div className="main-content" style={{ marginLeft: 240 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-          <h1 style={{ fontSize: 22, fontWeight: 600 }}>UÅ¾duotys</h1>
+          <h1 style={{ fontSize: 22, fontWeight: 600 }}>{lt.clientTasks.title}</h1>
           <button className="btn-primary" onClick={() => setShowForm(!showForm)}>
-            + Nauja uÅ¾klausa
+            {lt.clientTasks.newRequest}
           </button>
         </div>
 
         {showForm && (
           <div className="card" style={{ marginBottom: '1.5rem' }}>
-            <h3 style={{ fontWeight: 600, marginBottom: '1rem' }}>Nauja uÅ¾klausa agentÅ«rai</h3>
+            <h3 style={{ fontWeight: 600, marginBottom: '1rem' }}>{lt.clientTasks.formTitle}</h3>
             <form onSubmit={submitRequest} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               <input
                 value={newTask.title}
                 onChange={e => setNewTask(p => ({ ...p, title: e.target.value }))}
-                placeholder="UÅ¾klausos pavadinimas"
+                placeholder={lt.clientTasks.titlePlaceholder}
                 required
                 style={{ padding: '9px 12px', border: '1px solid #e5e5e5', borderRadius: 8, fontSize: 14, outline: 'none' }}
               />
               <textarea
                 value={newTask.description}
                 onChange={e => setNewTask(p => ({ ...p, description: e.target.value }))}
-                placeholder="ApraÅ¡ymas (neprivaloma)"
+                placeholder={lt.clientTasks.descPlaceholder}
                 rows={3}
                 style={{ padding: '9px 12px', border: '1px solid #e5e5e5', borderRadius: 8, fontSize: 14, outline: 'none', resize: 'vertical' }}
               />
               <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button type="submit" className="btn-primary">SiÅ³sti</button>
-                <button type="button" className="btn-secondary" onClick={() => setShowForm(false)}>AtÅ¡aukti</button>
+                <button type="submit" className="btn-primary">{lt.clientTasks.submit}</button>
+                <button type="button" className="btn-secondary" onClick={() => setShowForm(false)}>{lt.clientTasks.cancel}</button>
               </div>
             </form>
           </div>
@@ -100,7 +96,7 @@ export default function ClientTasksPage() {
           {columns.map(col => (
             <div key={col}>
               <div style={{ fontSize: 13, fontWeight: 600, color: '#888', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                {STATUS_LABELS[col]} ({tasks.filter(t => t.status === col).length})
+                {lt.clientTasks.statuses[col]} ({tasks.filter(t => t.status === col).length})
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 {tasks.filter(t => t.status === col).map(task => (
@@ -111,7 +107,7 @@ export default function ClientTasksPage() {
                     )}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ fontSize: 11, color: PRIORITY_COLORS[task.priority], fontWeight: 500 }}>
-                        {PRIORITY_LABELS[task.priority]}
+                        {lt.clientTasks.priorities[task.priority as keyof typeof lt.clientTasks.priorities]}
                       </span>
                       {task.due_date && (
                         <span style={{ fontSize: 11, color: '#888' }}>
