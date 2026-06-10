@@ -100,7 +100,7 @@ export default function PostModal({ post, clientId, role, onClose, onUpdate }: P
   }
 
   async function handleStatusChange(status: 'approved' | 'rejected') {
-    setActionLoading(status)
+    setActionLoading(status === 'approved' ? 'approve' : 'reject')
     await supabase.from('content_posts').update({ status }).eq('id', post.id)
     setCurrentStatus(status)
     onUpdate({ ...post, status })
