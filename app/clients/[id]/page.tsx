@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import Sidebar from '@/components/layout/Sidebar'
+import ContentCalendar from '@/components/ContentCalendar'
 import { lt } from '@/lib/i18n/lt'
 import type { Client, Goal, Task, ContentPost, FileRecord } from '@/types'
 
@@ -244,35 +245,14 @@ export default function ClientDetailPage() {
 
         {/* ── TURINYS ── */}
         <SectionHeader id="turinys" title={lt.clientDetail.sections.content} />
-        {posts.length === 0 ? (
-          <div className="card" style={{ color: '#aaa', textAlign: 'center', padding: '2rem' }}>
-            {lt.clientDetail.content.noContent}
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            {posts.map(post => (
-              <div key={post.id} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontWeight: 500, marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {post.title}
-                  </div>
-                  <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                    <Badge
-                      label={lt.clientDetail.content.statuses[post.status]}
-                      style={contentStatusColors[post.status] || { bg: '#f0f0f0', color: '#666' }}
-                    />
-                    <span style={{ fontSize: 12, color: '#aaa' }}>{post.platform}</span>
-                  </div>
-                </div>
-                {post.publish_date && (
-                  <div style={{ fontSize: 12, color: '#aaa', whiteSpace: 'nowrap' }}>
-                    {lt.clientDetail.content.publishDate} {new Date(post.publish_date).toLocaleDateString('lt-LT')}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
+        <div className="card" style={{ padding: '1.25rem' }}>
+          <ContentCalendar
+            posts={posts}
+            clientId={clientId}
+            role="agency_admin"
+            onPostsChange={setPosts}
+          />
+        </div>
 
         {/* ── ATASKAITOS ── */}
         <SectionHeader id="ataskaitos" title={lt.clientDetail.sections.reports} />
