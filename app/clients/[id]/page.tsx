@@ -523,8 +523,8 @@ export default function ClientDetailPage() {
               onChange={e => setUploadFolder(e.target.value)}
               style={{ padding: '8px 12px', border: '1px solid #e5e5e5', borderRadius: 8, fontSize: 13 }}>
               <option value="">Be aplanko</option>
-              {[...new Set(files.map(f => f.folder).filter(Boolean))].map(f => (
-                <option key={f!} value={f!}>{f}</option>
+              {files.map(f => f.folder).filter((f): f is string => !!f).filter((f, i, arr) => arr.indexOf(f) === i).map(f => (
+                <option key={f} value={f}>{f}</option>
               ))}
             </select>
             <button className="btn-primary" style={{ fontSize: 13 }} onClick={() => fileRef.current?.click()}>
