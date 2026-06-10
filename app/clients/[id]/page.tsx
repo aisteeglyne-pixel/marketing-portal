@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import Sidebar from '@/components/layout/Sidebar'
@@ -75,6 +75,11 @@ export default function ClientDetailPage() {
   const [posts, setPosts] = useState<ContentPost[]>([])
   const [files, setFiles] = useState<FileRecord[]>([])
   const [loading, setLoading] = useState(true)
+  const [uploading, setUploading] = useState(false)
+  const [uploadFolder, setUploadFolder] = useState('')
+  const fileRef = useRef<HTMLInputElement>(null)
+  const [showTaskForm, setShowTaskForm] = useState(false)
+  const [newTask, setNewTask] = useState({ title: '', description: '', priority: 'medium', due_date: '' })
 
   useEffect(() => {
     async function load() {
@@ -115,6 +120,51 @@ export default function ClientDetailPage() {
     }
     load()
   }, [clientId])
+
+  async function handleTaskCreate(e: React.FormEvent) {
+    e.preventDefault()
+    const { data } = await supabase.from('tasks').insert({
+      agency_id: profile.agency_id,
+      client_id: clientId,
+      title: newTask.title,
+      description: newTask.description || null,
+      priority: newTask.priority,
+      due_date: newTask.due_date || null,
+      status: 'backlog',
+      type: 'agency_task',
+      created_by: profile.id,
+    }).select().single()
+    if (data) setTasks(prev => [data, ...prev])
+    setNewTask({ title: '', description: '', priority: 'medium', due_date: '' })
+    setShowTaskForm(false)
+  }
+
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file || !profile) return
+    setUploading(true)
+    const ext = file.name.split('.').pop()
+    const path = `${clientId}/${Date.now()}.${ext}`
+    const { data: upload, error } = await supabase.storage.from('client-files').upload(path, file)
+    if (!error && upload) {
+      const { data: { publicUrl } } = supabase.storage.from('client-files').getPublicUrl(path)
+      const type: FileRecord['file_type'] = file.type.startsWith('video') ? 'video'
+        : file.type.startsWith('image') ? 'photo' : 'doc'
+      const { data: rec } = await supabase.from('files').insert({
+        agency_id: profile.agency_id,
+        client_id: clientId,
+        file_name: file.name,
+        file_url: publicUrl,
+        file_type: type,
+        folder: uploadFolder || null,
+        uploaded_by: profile.id,
+        uploaded_date: new Date().toISOString(),
+      }).select().single()
+      if (rec) setFiles(prev => [rec, ...prev])
+    }
+    setUploading(false)
+    if (fileRef.current) fileRef.current.value = ''
+  }
 
   if (loading || !profile) return <div style={{ padding: '2rem' }}>{lt.common.loading}</div>
 
@@ -209,7 +259,52 @@ export default function ClientDetailPage() {
         )}
 
         {/* ── UŽDUOTYS ── */}
-        <SectionHeader id="uzduotys" title={lt.clientDetail.sections.tasks} />
+        <div id="uzduotys" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '2rem', borderTop: '1px solid #f0f0f0', marginBottom: '1rem' }}>
+          <h2 style={{ fontSize: 17, fontWeight: 600 }}>{lt.clientDetail.sections.tasks}</h2>
+          <button className="btn-primary" style={{ fontSize: 13, padding: '6px 14px' }} onClick={() => setShowTaskForm(v => !v)}>
+            + {lt.clientDetail.tasks.statuses.backlog === 'Eilėje' ? 'Nauja užduotis' : 'New task'}
+          </button>
+        </div>
+        {showTaskForm && (
+          <div className="card" style={{ marginBottom: '1rem' }}>
+            <form onSubmit={handleTaskCreate} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <input
+                value={newTask.title}
+                onChange={e => setNewTask(p => ({ ...p, title: e.target.value }))}
+                placeholder="Užduoties pavadinimas"
+                required
+                style={{ padding: '9px 12px', border: '1px solid #e5e5e5', borderRadius: 8, fontSize: 14, outline: 'none' }}
+              />
+              <textarea
+                value={newTask.description}
+                onChange={e => setNewTask(p => ({ ...p, description: e.target.value }))}
+                placeholder="Aprašymas (neprivaloma)"
+                rows={2}
+                style={{ padding: '9px 12px', border: '1px solid #e5e5e5', borderRadius: 8, fontSize: 14, outline: 'none', resize: 'vertical' }}
+              />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                <select
+                  value={newTask.priority}
+                  onChange={e => setNewTask(p => ({ ...p, priority: e.target.value }))}
+                  style={{ padding: '9px 12px', border: '1px solid #e5e5e5', borderRadius: 8, fontSize: 14 }}>
+                  <option value="low">{lt.clientDetail.tasks.priorities.low}</option>
+                  <option value="medium">{lt.clientDetail.tasks.priorities.medium}</option>
+                  <option value="high">{lt.clientDetail.tasks.priorities.high}</option>
+                </select>
+                <input
+                  type="date"
+                  value={newTask.due_date}
+                  onChange={e => setNewTask(p => ({ ...p, due_date: e.target.value }))}
+                  style={{ padding: '9px 12px', border: '1px solid #e5e5e5', borderRadius: 8, fontSize: 14 }}
+                />
+              </div>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button type="submit" className="btn-primary">{lt.common.save}</button>
+                <button type="button" className="btn-secondary" onClick={() => setShowTaskForm(false)}>{lt.common.cancel}</button>
+              </div>
+            </form>
+          </div>
+        )}
         {tasks.length === 0 ? (
           <div className="card" style={{ color: '#aaa', textAlign: 'center', padding: '2rem' }}>
             {lt.clientDetail.tasks.noTasks}
@@ -272,7 +367,21 @@ export default function ClientDetailPage() {
         </div>
 
         {/* ── FAILAI ── */}
-        <SectionHeader id="failai" title={lt.clientDetail.sections.files} />
+        <h2 id="failai" style={{ fontSize: 17, fontWeight: 600, marginBottom: '1rem', paddingTop: '2rem', borderTop: '1px solid #f0f0f0' }}>
+          {lt.clientDetail.sections.files}
+        </h2>
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '1rem' }}>
+          <input
+            value={uploadFolder}
+            onChange={e => setUploadFolder(e.target.value)}
+            placeholder={lt.clientFiles.folderPlaceholder}
+            style={{ padding: '8px 12px', border: '1px solid #e5e5e5', borderRadius: 8, fontSize: 13, outline: 'none' }}
+          />
+          <input ref={fileRef} type="file" onChange={handleFileUpload} style={{ display: 'none' }} />
+          <button className="btn-primary" style={{ fontSize: 13, padding: '7px 14px' }} onClick={() => fileRef.current?.click()} disabled={uploading}>
+            {uploading ? lt.clientFiles.uploading : lt.clientFiles.selectFile}
+          </button>
+        </div>
         {files.length === 0 ? (
           <div className="card" style={{ color: '#aaa', textAlign: 'center', padding: '2rem', marginBottom: '2rem' }}>
             {lt.clientDetail.files.noFiles}
