@@ -230,7 +230,6 @@ export const lt = {
     title: 'Tikslai',
     noGoals: 'Tikslų kol kas nėra. Agentūra juos nustatys.',
     deadline: 'iki',
-    metric: 'Metrika:',
   },
 
   clientReports: {

@@ -61,7 +61,7 @@ export default function ClientGoalsPage() {
                     </div>
                     <span style={{ fontSize: 13, color: '#888' }}>
                       {goal.current_value} / {goal.target_value}
-                      {goal.metric ? ` ${goal.metric}` : ''}
+                      {goal.unit ? ` ${goal.unit}` : ''}
                     </span>
                   </div>
 
