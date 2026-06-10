@@ -79,6 +79,8 @@ export default function ClientDetailPage() {
   const [uploading, setUploading] = useState(false)
   const [uploadFolder, setUploadFolder] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
+  const [fileMode, setFileMode] = useState<null | 'new_folder' | 'upload'>(null)
+  const [newFolderName, setNewFolderName] = useState('')
   const [showTaskForm, setShowTaskForm] = useState(false)
   const [newTask, setNewTask] = useState({ title: '', description: '', priority: 'medium', due_date: '', assigned_to: '' })
   const [showGoalForm, setShowGoalForm] = useState(false)
@@ -196,6 +198,8 @@ export default function ClientDetailPage() {
       if (rec) setFiles(prev => [rec, ...prev])
     }
     setUploading(false)
+    setFileMode(null)
+    setUploadFolder('')
     if (fileRef.current) fileRef.current.value = ''
   }
 
@@ -422,7 +426,7 @@ export default function ClientDetailPage() {
                   <div style={{ fontWeight: 500, marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {task.title}
                   </div>
-                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
                     <Badge
                       label={lt.clientDetail.tasks.statuses[task.status]}
                       style={taskStatusColors[task.status] || { bg: '#f0f0f0', color: '#666' }}
@@ -431,6 +435,11 @@ export default function ClientDetailPage() {
                       label={lt.clientDetail.tasks.priorities[task.priority]}
                       style={priorityColors[task.priority] || { bg: '#f0f0f0', color: '#666' }}
                     />
+                    {task.assigned_to && (
+                      <span style={{ fontSize: 12, color: '#666' }}>
+                        👤 {assignableUsers.find(u => u.id === task.assigned_to)?.label || '—'}
+                      </span>
+                    )}
                   </div>
                 </div>
                 {task.due_date && (
@@ -472,21 +481,62 @@ export default function ClientDetailPage() {
         </div>
 
         {/* ── FAILAI ── */}
-        <h2 id="failai" style={{ fontSize: 17, fontWeight: 600, marginBottom: '1rem', paddingTop: '2rem', borderTop: '1px solid #f0f0f0' }}>
-          {lt.clientDetail.sections.files}
-        </h2>
-        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '1rem' }}>
-          <input
-            value={uploadFolder}
-            onChange={e => setUploadFolder(e.target.value)}
-            placeholder={lt.clientFiles.folderPlaceholder}
-            style={{ padding: '8px 12px', border: '1px solid #e5e5e5', borderRadius: 8, fontSize: 13, outline: 'none' }}
-          />
-          <input ref={fileRef} type="file" onChange={handleFileUpload} style={{ display: 'none' }} />
-          <button className="btn-primary" style={{ fontSize: 13, padding: '7px 14px' }} onClick={() => fileRef.current?.click()} disabled={uploading}>
-            {uploading ? lt.clientFiles.uploading : lt.clientFiles.selectFile}
-          </button>
+        <div id="failai" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '2rem', borderTop: '1px solid #f0f0f0', marginBottom: '1rem' }}>
+          <h2 style={{ fontSize: 17, fontWeight: 600 }}>{lt.clientDetail.sections.files}</h2>
+          <div style={{ position: 'relative' }}>
+            <button className="btn-primary" style={{ fontSize: 13, padding: '6px 14px' }}
+              onClick={() => setFileMode(m => m ? null : 'choose')}>
+              + Sukurti naują
+            </button>
+            {fileMode === 'choose' && (
+              <div style={{ position: 'absolute', right: 0, top: '110%', background: '#fff', border: '1px solid #e5e5e5', borderRadius: 10, boxShadow: '0 4px 16px rgba(0,0,0,0.1)', zIndex: 10, minWidth: 180, overflow: 'hidden' }}>
+                <button onClick={() => setFileMode('new_folder')} style={dropdownItem}>📁 Naujas aplankas</button>
+                <button onClick={() => { setFileMode('upload'); setTimeout(() => fileRef.current?.click(), 50) }} style={dropdownItem}>⬆️ Įkelti failą</button>
+              </div>
+            )}
+          </div>
         </div>
+
+        <input ref={fileRef} type="file" onChange={handleFileUpload} style={{ display: 'none' }} />
+
+        {fileMode === 'new_folder' && (
+          <div className="card" style={{ marginBottom: '1rem', display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+            <input
+              value={newFolderName}
+              onChange={e => setNewFolderName(e.target.value)}
+              placeholder="Aplanko pavadinimas"
+              autoFocus
+              style={{ flex: 1, padding: '8px 12px', border: '1px solid #e5e5e5', borderRadius: 8, fontSize: 14, outline: 'none' }}
+            />
+            <button className="btn-primary" style={{ fontSize: 13 }}
+              onClick={() => { setUploadFolder(newFolderName); setNewFolderName(''); setFileMode('upload'); setTimeout(() => fileRef.current?.click(), 50) }}>
+              Sukurti ir įkelti failą
+            </button>
+            <button className="btn-secondary" style={{ fontSize: 13 }} onClick={() => setFileMode(null)}>Atšaukti</button>
+          </div>
+        )}
+
+        {fileMode === 'upload' && !uploading && (
+          <div className="card" style={{ marginBottom: '1rem', display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            <select
+              value={uploadFolder}
+              onChange={e => setUploadFolder(e.target.value)}
+              style={{ padding: '8px 12px', border: '1px solid #e5e5e5', borderRadius: 8, fontSize: 13 }}>
+              <option value="">Be aplanko</option>
+              {[...new Set(files.map(f => f.folder).filter(Boolean))].map(f => (
+                <option key={f!} value={f!}>{f}</option>
+              ))}
+            </select>
+            <button className="btn-primary" style={{ fontSize: 13 }} onClick={() => fileRef.current?.click()}>
+              Pasirinkti failą
+            </button>
+            <button className="btn-secondary" style={{ fontSize: 13 }} onClick={() => { setFileMode(null); setUploadFolder('') }}>Atšaukti</button>
+          </div>
+        )}
+
+        {uploading && (
+          <div style={{ marginBottom: '1rem', fontSize: 13, color: '#888' }}>⏳ Keliama...</div>
+        )}
         {files.length === 0 ? (
           <div className="card" style={{ color: '#aaa', textAlign: 'center', padding: '2rem', marginBottom: '2rem' }}>
             {lt.clientDetail.files.noFiles}
@@ -520,4 +570,11 @@ export default function ClientDetailPage() {
       </div>
     </div>
   )
+}
+
+const dropdownItem: React.CSSProperties = {
+  display: 'block', width: '100%', textAlign: 'left',
+  padding: '10px 16px', background: 'none', border: 'none',
+  cursor: 'pointer', fontSize: 14, color: '#333',
+  borderBottom: '1px solid #f5f5f5',
 }

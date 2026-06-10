@@ -12,7 +12,6 @@ const FILE_ICONS: Record<string, string> = {
 }
 
 function FileGrid({ files }: { files: FileRecord[] }) {
-  // Grupuoti pagal aplanką
   const grouped: Record<string, FileRecord[]> = {}
   files.forEach(f => {
     const key = f.folder || '—'
@@ -58,6 +57,8 @@ export default function ClientFilesPage() {
   const [files, setFiles] = useState<FileRecord[]>([])
   const [uploading, setUploading] = useState(false)
   const [folder, setFolder] = useState('')
+  const [fileMode, setFileMode] = useState<null | 'choose' | 'new_folder' | 'upload'>(null)
+  const [newFolderName, setNewFolderName] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
   const supabase = createClient()
@@ -104,8 +105,12 @@ export default function ClientFilesPage() {
       if (rec) setFiles(prev => [rec, ...prev])
     }
     setUploading(false)
+    setFileMode(null)
+    setFolder('')
     if (fileRef.current) fileRef.current.value = ''
   }
+
+  const existingFolders = [...new Set(files.map(f => f.folder).filter(Boolean))] as string[]
 
   if (!profile) return <div style={{ padding: '2rem' }}>{lt.common.loading}</div>
 
@@ -113,23 +118,55 @@ export default function ClientFilesPage() {
     <div style={{ display: 'flex' }}>
       <Sidebar role="client" agencyName={profile.agency?.name} agencyLogo={profile.agency?.logo_url} />
       <div className="main-content" style={{ marginLeft: 240 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 600, marginBottom: '1.5rem' }}>{lt.clientFiles.title}</h1>
-
-        <div className="card" style={{ marginBottom: '1.5rem' }}>
-          <h3 style={{ fontWeight: 600, marginBottom: '1rem' }}>{lt.clientFiles.uploadTitle}</h3>
-          <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
-            <input
-              value={folder}
-              onChange={e => setFolder(e.target.value)}
-              placeholder={lt.clientFiles.folderPlaceholder}
-              style={{ padding: '8px 12px', border: '1px solid #e5e5e5', borderRadius: 8, fontSize: 13, outline: 'none' }}
-            />
-            <input ref={fileRef} type="file" onChange={handleUpload} style={{ display: 'none' }} />
-            <button className="btn-primary" onClick={() => fileRef.current?.click()} disabled={uploading}>
-              {uploading ? lt.clientFiles.uploading : lt.clientFiles.selectFile}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+          <h1 style={{ fontSize: 22, fontWeight: 600 }}>{lt.clientFiles.title}</h1>
+          <div style={{ position: 'relative' }}>
+            <button className="btn-primary" onClick={() => setFileMode(m => m ? null : 'choose')}>
+              + Sukurti naują
             </button>
+            {fileMode === 'choose' && (
+              <div style={{ position: 'absolute', right: 0, top: '110%', background: '#fff', border: '1px solid #e5e5e5', borderRadius: 10, boxShadow: '0 4px 16px rgba(0,0,0,0.1)', zIndex: 10, minWidth: 180, overflow: 'hidden' }}>
+                <button onClick={() => setFileMode('new_folder')} style={dropdownItem}>📁 Naujas aplankas</button>
+                <button onClick={() => { setFileMode('upload'); setTimeout(() => fileRef.current?.click(), 50) }} style={dropdownItem}>⬆️ Įkelti failą</button>
+              </div>
+            )}
           </div>
         </div>
+
+        <input ref={fileRef} type="file" onChange={handleUpload} style={{ display: 'none' }} />
+
+        {fileMode === 'new_folder' && (
+          <div className="card" style={{ marginBottom: '1.5rem', display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+            <input
+              value={newFolderName}
+              onChange={e => setNewFolderName(e.target.value)}
+              placeholder="Aplanko pavadinimas"
+              autoFocus
+              style={{ flex: 1, padding: '8px 12px', border: '1px solid #e5e5e5', borderRadius: 8, fontSize: 14, outline: 'none' }}
+            />
+            <button className="btn-primary"
+              onClick={() => { setFolder(newFolderName); setNewFolderName(''); setFileMode('upload'); setTimeout(() => fileRef.current?.click(), 50) }}>
+              Sukurti ir įkelti failą
+            </button>
+            <button className="btn-secondary" onClick={() => setFileMode(null)}>Atšaukti</button>
+          </div>
+        )}
+
+        {fileMode === 'upload' && !uploading && (
+          <div className="card" style={{ marginBottom: '1.5rem', display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            <select
+              value={folder}
+              onChange={e => setFolder(e.target.value)}
+              style={{ padding: '8px 12px', border: '1px solid #e5e5e5', borderRadius: 8, fontSize: 13 }}>
+              <option value="">Be aplanko</option>
+              {existingFolders.map(f => <option key={f} value={f}>{f}</option>)}
+            </select>
+            <button className="btn-primary" onClick={() => fileRef.current?.click()}>Pasirinkti failą</button>
+            <button className="btn-secondary" onClick={() => { setFileMode(null); setFolder('') }}>Atšaukti</button>
+          </div>
+        )}
+
+        {uploading && <div style={{ marginBottom: '1rem', fontSize: 13, color: '#888' }}>⏳ Keliama...</div>}
 
         {files.length === 0 ? (
           <div className="card" style={{ textAlign: 'center', color: '#888', padding: '2rem' }}>
@@ -141,4 +178,11 @@ export default function ClientFilesPage() {
       </div>
     </div>
   )
+}
+
+const dropdownItem: React.CSSProperties = {
+  display: 'block', width: '100%', textAlign: 'left',
+  padding: '10px 16px', background: 'none', border: 'none',
+  cursor: 'pointer', fontSize: 14, color: '#333',
+  borderBottom: '1px solid #f5f5f5',
 }
