@@ -79,7 +79,7 @@ export default function ClientDetailPage() {
   const [uploading, setUploading] = useState(false)
   const [uploadFolder, setUploadFolder] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
-  const [fileMode, setFileMode] = useState<null | 'new_folder' | 'upload'>(null)
+  const [fileMode, setFileMode] = useState<null | 'choose' | 'new_folder' | 'upload'>(null)
   const [newFolderName, setNewFolderName] = useState('')
   const [showTaskForm, setShowTaskForm] = useState(false)
   const [newTask, setNewTask] = useState({ title: '', description: '', priority: 'medium', due_date: '', assigned_to: '' })
