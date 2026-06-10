@@ -80,6 +80,8 @@ export default function ClientDetailPage() {
   const fileRef = useRef<HTMLInputElement>(null)
   const [showTaskForm, setShowTaskForm] = useState(false)
   const [newTask, setNewTask] = useState({ title: '', description: '', priority: 'medium', due_date: '' })
+  const [showGoalForm, setShowGoalForm] = useState(false)
+  const [newGoal, setNewGoal] = useState({ title: '', target_value: '', current_value: '0', unit: '', deadline: '' })
 
   useEffect(() => {
     async function load() {
@@ -137,6 +139,22 @@ export default function ClientDetailPage() {
     if (data) setTasks(prev => [data, ...prev])
     setNewTask({ title: '', description: '', priority: 'medium', due_date: '' })
     setShowTaskForm(false)
+  }
+
+  async function handleGoalCreate(e: React.FormEvent) {
+    e.preventDefault()
+    const { data } = await supabase.from('goals').insert({
+      agency_id: profile.agency_id,
+      client_id: clientId,
+      title: newGoal.title,
+      target_value: Number(newGoal.target_value),
+      current_value: Number(newGoal.current_value),
+      unit: newGoal.unit || null,
+      deadline: newGoal.deadline || null,
+    }).select().single()
+    if (data) setGoals(prev => [data, ...prev])
+    setNewGoal({ title: '', target_value: '', current_value: '0', unit: '', deadline: '' })
+    setShowGoalForm(false)
   }
 
   async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -217,7 +235,70 @@ export default function ClientDetailPage() {
         </div>
 
         {/* ── TIKSLAI ── */}
-        <SectionHeader id="tikslai" title={lt.clientDetail.sections.goals} />
+        <div id="tikslai" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '2rem', borderTop: '1px solid #f0f0f0', marginBottom: '1rem' }}>
+          <h2 style={{ fontSize: 17, fontWeight: 600 }}>{lt.clientDetail.sections.goals}</h2>
+          <button className="btn-primary" style={{ fontSize: 13, padding: '6px 14px' }} onClick={() => setShowGoalForm(v => !v)}>
+            + Naujas tikslas
+          </button>
+        </div>
+        {showGoalForm && (
+          <div className="card" style={{ marginBottom: '1rem' }}>
+            <form onSubmit={handleGoalCreate} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <input
+                value={newGoal.title}
+                onChange={e => setNewGoal(p => ({ ...p, title: e.target.value }))}
+                placeholder="Tikslo pavadinimas (pvz. Pasiekti 5000 sekėjų)"
+                required
+                style={{ padding: '9px 12px', border: '1px solid #e5e5e5', borderRadius: 8, fontSize: 14, outline: 'none' }}
+              />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 11, color: '#aaa', marginBottom: 4, textTransform: 'uppercase' }}>Tikslinė reikšmė</label>
+                  <input
+                    type="number" min="0"
+                    value={newGoal.target_value}
+                    onChange={e => setNewGoal(p => ({ ...p, target_value: e.target.value }))}
+                    placeholder="5000"
+                    required
+                    style={{ padding: '9px 12px', border: '1px solid #e5e5e5', borderRadius: 8, fontSize: 14, outline: 'none', width: '100%', boxSizing: 'border-box' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 11, color: '#aaa', marginBottom: 4, textTransform: 'uppercase' }}>Dabartinė reikšmė</label>
+                  <input
+                    type="number" min="0"
+                    value={newGoal.current_value}
+                    onChange={e => setNewGoal(p => ({ ...p, current_value: e.target.value }))}
+                    placeholder="0"
+                    style={{ padding: '9px 12px', border: '1px solid #e5e5e5', borderRadius: 8, fontSize: 14, outline: 'none', width: '100%', boxSizing: 'border-box' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 11, color: '#aaa', marginBottom: 4, textTransform: 'uppercase' }}>Vienetas</label>
+                  <input
+                    value={newGoal.unit}
+                    onChange={e => setNewGoal(p => ({ ...p, unit: e.target.value }))}
+                    placeholder="sekėjai, %, įrašai..."
+                    style={{ padding: '9px 12px', border: '1px solid #e5e5e5', borderRadius: 8, fontSize: 14, outline: 'none', width: '100%', boxSizing: 'border-box' }}
+                  />
+                </div>
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 11, color: '#aaa', marginBottom: 4, textTransform: 'uppercase' }}>Terminas (neprivaloma)</label>
+                <input
+                  type="date"
+                  value={newGoal.deadline}
+                  onChange={e => setNewGoal(p => ({ ...p, deadline: e.target.value }))}
+                  style={{ padding: '9px 12px', border: '1px solid #e5e5e5', borderRadius: 8, fontSize: 14, outline: 'none' }}
+                />
+              </div>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button type="submit" className="btn-primary">{lt.common.save}</button>
+                <button type="button" className="btn-secondary" onClick={() => setShowGoalForm(false)}>{lt.common.cancel}</button>
+              </div>
+            </form>
+          </div>
+        )}
         {goals.length === 0 ? (
           <div className="card" style={{ color: '#aaa', textAlign: 'center', padding: '2rem' }}>
             {lt.clientDetail.goals.noGoals}
