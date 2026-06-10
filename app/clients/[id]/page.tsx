@@ -249,6 +249,7 @@ export default function ClientDetailPage() {
           <ContentCalendar
             posts={posts}
             clientId={clientId}
+            agencyId={profile.agency_id}
             role="agency_admin"
             onPostsChange={setPosts}
           />

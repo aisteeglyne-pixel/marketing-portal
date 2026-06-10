@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { createClient } from '@/lib/supabase'
 import { lt } from '@/lib/i18n/lt'
 import type { ContentPost } from '@/types'
 import PostModal from './PostModal'
@@ -16,15 +17,36 @@ const STATUS_COLORS: Record<string, string> = {
 interface ContentCalendarProps {
   posts: ContentPost[]
   clientId: string
+  agencyId?: string
   role: 'agency_admin' | 'client'
   onPostsChange: (posts: ContentPost[]) => void
 }
 
-export default function ContentCalendar({ posts, clientId, role, onPostsChange }: ContentCalendarProps) {
+interface NewPostForm {
+  title: string
+  caption: string
+  platform: string
+  publish_date: string
+  status: 'draft' | 'review'
+}
+
+const defaultForm = (): NewPostForm => ({
+  title: '',
+  caption: '',
+  platform: 'Instagram',
+  publish_date: '',
+  status: 'draft',
+})
+
+export default function ContentCalendar({ posts, clientId, agencyId, role, onPostsChange }: ContentCalendarProps) {
   const today = new Date()
   const [year, setYear] = useState(today.getFullYear())
-  const [month, setMonth] = useState(today.getMonth()) // 0-indexed
+  const [month, setMonth] = useState(today.getMonth())
   const [selectedPost, setSelectedPost] = useState<ContentPost | null>(null)
+  const [showNewPost, setShowNewPost] = useState(false)
+  const [form, setForm] = useState<NewPostForm>(defaultForm())
+  const [submitting, setSubmitting] = useState(false)
+  const supabase = createClient()
 
   function prevMonth() {
     if (month === 0) { setYear(y => y - 1); setMonth(11) }
@@ -35,12 +57,10 @@ export default function ContentCalendar({ posts, clientId, role, onPostsChange }
     else setMonth(m => m + 1)
   }
 
-  // Kalendoriaus skaičiavimai
-  const firstDay = new Date(year, month, 1).getDay() // 0=Sun, 1=Mon...
-  const firstDayAdj = (firstDay + 6) % 7 // pirmadienis = 0
+  const firstDay = new Date(year, month, 1).getDay()
+  const firstDayAdj = (firstDay + 6) % 7
   const daysInMonth = new Date(year, month + 1, 0).getDate()
 
-  // Grupuoti įrašus pagal dieną
   const postsByDay: Record<number, ContentPost[]> = {}
   const unscheduled: ContentPost[] = []
 
@@ -62,15 +82,34 @@ export default function ContentCalendar({ posts, clientId, role, onPostsChange }
     setSelectedPost(updated)
   }
 
+  async function handleCreate(e: React.FormEvent) {
+    e.preventDefault()
+    if (!agencyId) return
+    setSubmitting(true)
+    const { data } = await supabase.from('content_posts').insert({
+      agency_id: agencyId,
+      client_id: clientId,
+      title: form.title,
+      caption: form.caption || null,
+      platform: form.platform,
+      publish_date: form.publish_date || null,
+      status: form.status,
+    }).select().single()
+    if (data) {
+      onPostsChange([...posts, data])
+    }
+    setForm(defaultForm())
+    setShowNewPost(false)
+    setSubmitting(false)
+  }
+
   const isToday = (day: number) =>
     day === today.getDate() && month === today.getMonth() && year === today.getFullYear()
 
-  // Ląstelės: tušti + dienos
   const cells: (number | null)[] = [
     ...Array(firstDayAdj).fill(null),
     ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
   ]
-  // Užpildyti iki pilnos savaitės
   while (cells.length % 7 !== 0) cells.push(null)
 
   return (
@@ -85,7 +124,11 @@ export default function ContentCalendar({ posts, clientId, role, onPostsChange }
           <button onClick={nextMonth} style={navBtnStyle}>{lt.calendar.next}</button>
         </div>
         {role === 'agency_admin' && (
-          <button className="btn-primary" style={{ fontSize: 13, padding: '6px 14px' }}>
+          <button
+            className="btn-primary"
+            style={{ fontSize: 13, padding: '6px 14px' }}
+            onClick={() => setShowNewPost(true)}
+          >
             {lt.calendar.newPost}
           </button>
         )}
@@ -165,7 +208,7 @@ export default function ContentCalendar({ posts, clientId, role, onPostsChange }
         </div>
       )}
 
-      {/* Modalas */}
+      {/* Esamo įrašo modalas */}
       {selectedPost && (
         <PostModal
           post={selectedPost}
@@ -175,6 +218,100 @@ export default function ContentCalendar({ posts, clientId, role, onPostsChange }
           onUpdate={handlePostUpdate}
         />
       )}
+
+      {/* Naujo įrašo modalas */}
+      {showNewPost && (
+        <div
+          onClick={() => setShowNewPost(false)}
+          style={{
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)',
+            zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '1rem',
+          }}>
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              background: '#fff', borderRadius: 16, width: '100%', maxWidth: 480,
+              boxShadow: '0 20px 60px rgba(0,0,0,0.15)', overflow: 'hidden',
+            }}>
+            <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h2 style={{ fontSize: 17, fontWeight: 600 }}>{lt.newPostForm.title}</h2>
+              <button onClick={() => setShowNewPost(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: '#aaa' }}>✕</button>
+            </div>
+
+            <form onSubmit={handleCreate} style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {/* Pavadinimas */}
+              <div>
+                <label style={labelStyle}>{lt.newPostForm.titleLabel}</label>
+                <input
+                  value={form.title}
+                  onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
+                  placeholder={lt.newPostForm.titlePlaceholder}
+                  required
+                  style={inputStyle}
+                />
+              </div>
+
+              {/* Platforma + data */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                <div>
+                  <label style={labelStyle}>{lt.newPostForm.platformLabel}</label>
+                  <select
+                    value={form.platform}
+                    onChange={e => setForm(f => ({ ...f, platform: e.target.value }))}
+                    style={inputStyle}>
+                    {lt.newPostForm.platforms.map((p: string) => (
+                      <option key={p} value={p}>{p}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label style={labelStyle}>{lt.newPostForm.statusLabel}</label>
+                  <select
+                    value={form.status}
+                    onChange={e => setForm(f => ({ ...f, status: e.target.value as 'draft' | 'review' }))}
+                    style={inputStyle}>
+                    <option value="draft">{lt.calendar.statuses.draft}</option>
+                    <option value="review">{lt.calendar.statuses.review}</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Data */}
+              <div>
+                <label style={labelStyle}>{lt.newPostForm.dateLabel}</label>
+                <input
+                  type="datetime-local"
+                  value={form.publish_date}
+                  onChange={e => setForm(f => ({ ...f, publish_date: e.target.value }))}
+                  style={inputStyle}
+                />
+              </div>
+
+              {/* Tekstas */}
+              <div>
+                <label style={labelStyle}>{lt.newPostForm.captionLabel}</label>
+                <textarea
+                  value={form.caption}
+                  onChange={e => setForm(f => ({ ...f, caption: e.target.value }))}
+                  placeholder={lt.newPostForm.captionPlaceholder}
+                  rows={4}
+                  style={{ ...inputStyle, resize: 'vertical' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', paddingTop: 4 }}>
+                <button type="button" onClick={() => setShowNewPost(false)} className="btn-secondary">
+                  {lt.newPostForm.cancel}
+                </button>
+                <button type="submit" className="btn-primary" disabled={submitting}>
+                  {submitting ? lt.newPostForm.submitting : lt.newPostForm.submit}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -182,4 +319,15 @@ export default function ContentCalendar({ posts, clientId, role, onPostsChange }
 const navBtnStyle: React.CSSProperties = {
   background: 'none', border: '1px solid #e5e5e5', borderRadius: 8,
   padding: '4px 12px', cursor: 'pointer', fontSize: 16, color: '#555',
+}
+
+const labelStyle: React.CSSProperties = {
+  display: 'block', fontSize: 12, fontWeight: 600, color: '#666',
+  marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em',
+}
+
+const inputStyle: React.CSSProperties = {
+  width: '100%', padding: '9px 12px', border: '1px solid #e5e5e5',
+  borderRadius: 8, fontSize: 14, outline: 'none', boxSizing: 'border-box',
+  background: '#fff',
 }

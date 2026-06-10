@@ -254,6 +254,21 @@ export const lt = {
     },
   },
 
+  newPostForm: {
+    title: 'Naujas įrašas',
+    titleLabel: 'Pavadinimas',
+    titlePlaceholder: 'Įrašo pavadinimas',
+    captionLabel: 'Tekstas',
+    captionPlaceholder: 'Įrašo tekstas socialiniuose tinkluose...',
+    platformLabel: 'Platforma',
+    dateLabel: 'Publikavimo data',
+    statusLabel: 'Statusas',
+    submit: 'Sukurti',
+    submitting: 'Kuriama...',
+    cancel: 'Atšaukti',
+    platforms: ['Instagram', 'Facebook', 'LinkedIn', 'TikTok', 'X'],
+  },
+
   postModal: {
     close: '✕',
     platform: 'Platforma:',
