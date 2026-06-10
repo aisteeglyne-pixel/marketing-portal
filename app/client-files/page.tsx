@@ -56,6 +56,7 @@ export default function ClientFilesPage() {
   const [profile, setProfile] = useState<any>(null)
   const [files, setFiles] = useState<FileRecord[]>([])
   const [uploading, setUploading] = useState(false)
+  const [uploadCount, setUploadCount] = useState(0)
   const [folder, setFolder] = useState('')
   const [fileMode, setFileMode] = useState<null | 'choose' | 'new_folder' | 'upload'>(null)
   const [newFolderName, setNewFolderName] = useState('')
@@ -79,32 +80,38 @@ export default function ClientFilesPage() {
   }, [])
 
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file || !profile) return
+    const selectedFiles = Array.from(e.target.files || [])
+    if (!selectedFiles.length || !profile) return
     setUploading(true)
-    const ext = file.name.split('.').pop()
+    setUploadCount(selectedFiles.length)
     const folderName = folder.trim()
-    const path = folderName
-      ? `${profile.client_id}/${folderName}/${Date.now()}.${ext}`
-      : `${profile.client_id}/${Date.now()}.${ext}`
-    const { data: upload, error } = await supabase.storage.from('client-files').upload(path, file)
-    if (!error && upload) {
-      const { data: { publicUrl } } = supabase.storage.from('client-files').getPublicUrl(path)
-      const type: FileRecord['file_type'] = file.type.startsWith('video') ? 'video'
-        : file.type.startsWith('image') ? 'photo' : 'doc'
-      const { data: rec } = await supabase.from('files').insert({
-        agency_id: profile.agency_id,
-        client_id: profile.client_id,
-        file_name: file.name,
-        file_url: publicUrl,
-        file_type: type,
-        folder: folder || null,
-        uploaded_by: profile.id,
-        uploaded_date: new Date().toISOString(),
-      }).select().single()
-      if (rec) setFiles(prev => [rec, ...prev])
+    const newRecs: FileRecord[] = []
+    for (const file of selectedFiles) {
+      const ext = file.name.split('.').pop()
+      const path = folderName
+        ? `${profile.client_id}/${folderName}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`
+        : `${profile.client_id}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`
+      const { data: upload, error } = await supabase.storage.from('client-files').upload(path, file)
+      if (!error && upload) {
+        const { data: { publicUrl } } = supabase.storage.from('client-files').getPublicUrl(path)
+        const type: FileRecord['file_type'] = file.type.startsWith('video') ? 'video'
+          : file.type.startsWith('image') ? 'photo' : 'doc'
+        const { data: rec } = await supabase.from('files').insert({
+          agency_id: profile.agency_id,
+          client_id: profile.client_id,
+          file_name: file.name,
+          file_url: publicUrl,
+          file_type: type,
+          folder: folderName || null,
+          uploaded_by: profile.id,
+          uploaded_date: new Date().toISOString(),
+        }).select().single()
+        if (rec) newRecs.push(rec)
+      }
     }
+    if (newRecs.length) setFiles(prev => [...newRecs, ...prev])
     setUploading(false)
+    setUploadCount(0)
     setFileMode(null)
     setFolder('')
     if (fileRef.current) fileRef.current.value = ''
@@ -127,13 +134,13 @@ export default function ClientFilesPage() {
             {fileMode === 'choose' && (
               <div style={{ position: 'absolute', right: 0, top: '110%', background: '#fff', border: '1px solid #e5e5e5', borderRadius: 10, boxShadow: '0 4px 16px rgba(0,0,0,0.1)', zIndex: 10, minWidth: 180, overflow: 'hidden' }}>
                 <button onClick={() => setFileMode('new_folder')} style={dropdownItem}>📁 Naujas aplankas</button>
-                <button onClick={() => { setFileMode('upload'); setTimeout(() => fileRef.current?.click(), 50) }} style={dropdownItem}>⬆️ Įkelti failą</button>
+                <button onClick={() => { setFileMode('upload'); setTimeout(() => fileRef.current?.click(), 50) }} style={dropdownItem}>⬆️ Įkelti failus</button>
               </div>
             )}
           </div>
         </div>
 
-        <input ref={fileRef} type="file" onChange={handleUpload} style={{ display: 'none' }} />
+        <input ref={fileRef} type="file" multiple onChange={handleUpload} style={{ display: 'none' }} />
 
         {fileMode === 'new_folder' && (
           <div className="card" style={{ marginBottom: '1.5rem', display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
@@ -146,7 +153,7 @@ export default function ClientFilesPage() {
             />
             <button className="btn-primary"
               onClick={() => { setFolder(newFolderName); setNewFolderName(''); setFileMode('upload'); setTimeout(() => fileRef.current?.click(), 50) }}>
-              Sukurti ir įkelti failą
+              Sukurti ir įkelti failus
             </button>
             <button className="btn-secondary" onClick={() => setFileMode(null)}>Atšaukti</button>
           </div>
@@ -161,12 +168,16 @@ export default function ClientFilesPage() {
               <option value="">Be aplanko</option>
               {existingFolders.map(f => <option key={f} value={f}>{f}</option>)}
             </select>
-            <button className="btn-primary" onClick={() => fileRef.current?.click()}>Pasirinkti failą</button>
+            <button className="btn-primary" onClick={() => fileRef.current?.click()}>Pasirinkti failus</button>
             <button className="btn-secondary" onClick={() => { setFileMode(null); setFolder('') }}>Atšaukti</button>
           </div>
         )}
 
-        {uploading && <div style={{ marginBottom: '1rem', fontSize: 13, color: '#888' }}>⏳ Keliama...</div>}
+        {uploading && (
+          <div style={{ marginBottom: '1rem', fontSize: 13, color: '#888' }}>
+            ⏳ Keliama{uploadCount > 1 ? ` (${uploadCount} failai)` : ''}...
+          </div>
+        )}
 
         {files.length === 0 ? (
           <div className="card" style={{ textAlign: 'center', color: '#888', padding: '2rem' }}>

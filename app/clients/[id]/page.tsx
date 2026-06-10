@@ -172,31 +172,35 @@ export default function ClientDetailPage() {
   }
 
   async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file || !profile) return
+    const selectedFiles = Array.from(e.target.files || [])
+    if (!selectedFiles.length || !profile) return
     setUploading(true)
-    const ext = file.name.split('.').pop()
     const folder = uploadFolder.trim()
-    const path = folder
-      ? `${clientId}/${folder}/${Date.now()}.${ext}`
-      : `${clientId}/${Date.now()}.${ext}`
-    const { data: upload, error } = await supabase.storage.from('client-files').upload(path, file)
-    if (!error && upload) {
-      const { data: { publicUrl } } = supabase.storage.from('client-files').getPublicUrl(path)
-      const type: FileRecord['file_type'] = file.type.startsWith('video') ? 'video'
-        : file.type.startsWith('image') ? 'photo' : 'doc'
-      const { data: rec } = await supabase.from('files').insert({
-        agency_id: profile.agency_id,
-        client_id: clientId,
-        file_name: file.name,
-        file_url: publicUrl,
-        file_type: type,
-        folder: uploadFolder || null,
-        uploaded_by: profile.id,
-        uploaded_date: new Date().toISOString(),
-      }).select().single()
-      if (rec) setFiles(prev => [rec, ...prev])
+    const newRecs: FileRecord[] = []
+    for (const file of selectedFiles) {
+      const ext = file.name.split('.').pop()
+      const path = folder
+        ? `${clientId}/${folder}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`
+        : `${clientId}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`
+      const { data: upload, error } = await supabase.storage.from('client-files').upload(path, file)
+      if (!error && upload) {
+        const { data: { publicUrl } } = supabase.storage.from('client-files').getPublicUrl(path)
+        const type: FileRecord['file_type'] = file.type.startsWith('video') ? 'video'
+          : file.type.startsWith('image') ? 'photo' : 'doc'
+        const { data: rec } = await supabase.from('files').insert({
+          agency_id: profile.agency_id,
+          client_id: clientId,
+          file_name: file.name,
+          file_url: publicUrl,
+          file_type: type,
+          folder: folder || null,
+          uploaded_by: profile.id,
+          uploaded_date: new Date().toISOString(),
+        }).select().single()
+        if (rec) newRecs.push(rec)
+      }
     }
+    if (newRecs.length) setFiles(prev => [...newRecs, ...prev])
     setUploading(false)
     setFileMode(null)
     setUploadFolder('')
@@ -497,7 +501,7 @@ export default function ClientDetailPage() {
           </div>
         </div>
 
-        <input ref={fileRef} type="file" onChange={handleFileUpload} style={{ display: 'none' }} />
+        <input ref={fileRef} type="file" multiple onChange={handleFileUpload} style={{ display: 'none' }} />
 
         {fileMode === 'new_folder' && (
           <div className="card" style={{ marginBottom: '1rem', display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
@@ -542,28 +546,53 @@ export default function ClientDetailPage() {
             {lt.clientDetail.files.noFiles}
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '2rem' }}>
-            {files.map(file => (
-              <div key={file.id} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
-                  <span style={{ fontSize: 20 }}>{fileTypeIcons[file.file_type] || '📎'}</span>
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {file.file_name}
-                    </div>
-                    <div style={{ fontSize: 12, color: '#aaa' }}>
-                      {lt.clientDetail.files.types[file.file_type] || file.file_type}
-                      {file.uploaded_date && ` · ${lt.clientDetail.files.uploaded} ${new Date(file.uploaded_date).toLocaleDateString('lt-LT')}`}
-                    </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginBottom: '2rem' }}>
+            {(() => {
+              // Grupuoti pagal aplanką
+              const grouped: Record<string, FileRecord[]> = {}
+              files.forEach(f => {
+                const key = f.folder || '—'
+                if (!grouped[key]) grouped[key] = []
+                grouped[key].push(f)
+              })
+              const folderKeys = Object.keys(grouped).sort((a, b) =>
+                a === '—' ? 1 : b === '—' ? -1 : a.localeCompare(b)
+              )
+              return folderKeys.map(folderName => (
+                <div key={folderName}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: '0.5rem' }}>
+                    <span style={{ fontSize: 15 }}>{folderName === '—' ? '📁' : '📂'}</span>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: '#555' }}>
+                      {folderName === '—' ? 'Be aplanko' : folderName}
+                    </span>
+                    <span style={{ fontSize: 12, color: '#aaa' }}>({grouped[folderName].length})</span>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                    {grouped[folderName].map(file => (
+                      <div key={file.id} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
+                          <span style={{ fontSize: 20 }}>{fileTypeIcons[file.file_type] || '📎'}</span>
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {file.file_name}
+                            </div>
+                            <div style={{ fontSize: 12, color: '#aaa' }}>
+                              {lt.clientDetail.files.types[file.file_type] || file.file_type}
+                              {file.uploaded_date && ` · ${lt.clientDetail.files.uploaded} ${new Date(file.uploaded_date).toLocaleDateString('lt-LT')}`}
+                            </div>
+                          </div>
+                        </div>
+                        <a href={file.file_url} target="_blank" rel="noopener noreferrer"
+                          className="btn-secondary"
+                          style={{ fontSize: 12, padding: '5px 12px', textDecoration: 'none', whiteSpace: 'nowrap' }}>
+                          {lt.clientDetail.files.download}
+                        </a>
+                      </div>
+                    ))}
                   </div>
                 </div>
-                <a href={file.file_url} target="_blank" rel="noopener noreferrer"
-                  className="btn-secondary"
-                  style={{ fontSize: 12, padding: '5px 12px', textDecoration: 'none', whiteSpace: 'nowrap' }}>
-                  {lt.clientDetail.files.download}
-                </a>
-              </div>
-            ))}
+              ))
+            })()}
           </div>
         )}
 
