@@ -39,7 +39,7 @@ export default function ContentPage() {
 
   return (
     <div style={{ display: 'flex' }}>
-      <Sidebar role="agency_admin" agencyName={profile.agency?.name} />
+      <Sidebar role="agency_admin" agencyName={profile.agency?.name} agencyId={profile.agency_id} />
       <div className="main-content" style={{ marginLeft: 240 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
           <h1 style={{ fontSize: 22, fontWeight: 600 }}>{lt.content.title}</h1>

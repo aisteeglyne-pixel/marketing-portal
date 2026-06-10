@@ -41,7 +41,7 @@ export default function DashboardPage() {
 
   return (
     <div style={{ display: 'flex' }}>
-      <Sidebar role="agency_admin" agencyName={profile.agency?.name} agencyLogo={profile.agency?.logo_url} />
+      <Sidebar role="agency_admin" agencyName={profile.agency?.name} agencyLogo={profile.agency?.logo_url} agencyId={profile.agency_id} />
       <div className="main-content" style={{ marginLeft: 240 }}>
         <h1 style={{ fontSize: 22, fontWeight: 600, marginBottom: '0.5rem' }}>{lt.dashboard.title}</h1>
         <p style={{ color: '#888', marginBottom: '2rem' }}>{lt.dashboard.greeting}, {profile.full_name || profile.email}</p>

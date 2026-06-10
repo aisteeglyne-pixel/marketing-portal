@@ -26,7 +26,7 @@ export default function Page() {
 
   return (
     <div style={{ display: 'flex' }}>
-      <Sidebar role={profile.role} agencyName={profile.agency?.name} agencyLogo={profile.agency?.logo_url} />
+      <Sidebar role={profile.role} agencyName={profile.agency?.name} agencyLogo={profile.agency?.logo_url} agencyId={profile.agency_id} />
       <div className="main-content" style={{ marginLeft: 240 }}>
         <h1 style={{ fontSize: 22, fontWeight: 600 }}>{lt.files.title}</h1>
         <p style={{ color: '#888', marginTop: '0.5rem' }}>{lt.common.pageInProgress}</p>
