@@ -37,6 +37,7 @@ export interface ContentPost {
   client_id: string
   title: string
   caption: string | null
+  media_url: string | null
   status: 'draft' | 'review' | 'approved' | 'rejected' | 'published'
   platform: string
   publish_date: string | null
@@ -63,6 +64,7 @@ export interface Task {
   status: 'backlog' | 'in_progress' | 'review' | 'done'
   priority: 'low' | 'medium' | 'high'
   due_date: string | null
+  assigned_to: string | null
   type: 'agency_task' | 'client_request'
   created_by: string
   created_at: string

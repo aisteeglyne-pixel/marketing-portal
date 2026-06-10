@@ -177,6 +177,17 @@ export default function PostModal({ post, clientId, role, onClose, onUpdate }: P
           </button>
         </div>
 
+        {/* Vizualas */}
+        {post.media_url && (
+          <div style={{ borderBottom: '1px solid #f0f0f0' }}>
+            {post.media_url.match(/\.(mp4|mov|webm)$/i) ? (
+              <video src={post.media_url} controls style={{ width: '100%', maxHeight: 300, display: 'block' }} />
+            ) : (
+              <img src={post.media_url} alt="vizualas" style={{ width: '100%', maxHeight: 300, objectFit: 'cover', display: 'block' }} />
+            )}
+          </div>
+        )}
+
         {/* Caption */}
         <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid #f0f0f0' }}>
           <div style={{ fontSize: 12, fontWeight: 600, color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase'
 import { lt } from '@/lib/i18n/lt'
 import type { ContentPost } from '@/types'
@@ -46,6 +46,9 @@ export default function ContentCalendar({ posts, clientId, agencyId, role, onPos
   const [showNewPost, setShowNewPost] = useState(false)
   const [form, setForm] = useState<NewPostForm>(defaultForm())
   const [submitting, setSubmitting] = useState(false)
+  const [mediaUrl, setMediaUrl] = useState<string | null>(null)
+  const [uploadingMedia, setUploadingMedia] = useState(false)
+  const mediaRef = useRef<HTMLInputElement>(null)
   const supabase = createClient()
 
   function prevMonth() {
@@ -82,6 +85,20 @@ export default function ContentCalendar({ posts, clientId, agencyId, role, onPos
     setSelectedPost(updated)
   }
 
+  async function handleMediaUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadingMedia(true)
+    const ext = file.name.split('.').pop()
+    const path = `${clientId}/media/${Date.now()}.${ext}`
+    const { data, error } = await supabase.storage.from('client-files').upload(path, file)
+    if (data && !error) {
+      const { data: { publicUrl } } = supabase.storage.from('client-files').getPublicUrl(path)
+      setMediaUrl(publicUrl)
+    }
+    setUploadingMedia(false)
+  }
+
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault()
     if (!agencyId) return
@@ -91,6 +108,7 @@ export default function ContentCalendar({ posts, clientId, agencyId, role, onPos
       client_id: clientId,
       title: form.title,
       caption: form.caption || null,
+      media_url: mediaUrl,
       platform: form.platform,
       publish_date: form.publish_date || null,
       status: form.status,
@@ -99,6 +117,7 @@ export default function ContentCalendar({ posts, clientId, agencyId, role, onPos
       onPostsChange([...posts, data])
     }
     setForm(defaultForm())
+    setMediaUrl(null)
     setShowNewPost(false)
     setSubmitting(false)
   }
@@ -298,6 +317,31 @@ export default function ContentCalendar({ posts, clientId, agencyId, role, onPos
                   rows={4}
                   style={{ ...inputStyle, resize: 'vertical' }}
                 />
+              </div>
+
+              {/* Vizualas */}
+              <div>
+                <label style={labelStyle}>Vizualas</label>
+                <input ref={mediaRef} type="file" accept="image/*,video/*" onChange={handleMediaUpload} style={{ display: 'none' }} />
+                {mediaUrl ? (
+                  <div style={{ position: 'relative', display: 'inline-block' }}>
+                    <img src={mediaUrl} alt="preview" style={{ maxWidth: '100%', maxHeight: 200, borderRadius: 8, display: 'block' }} />
+                    <button
+                      type="button"
+                      onClick={() => { setMediaUrl(null); if (mediaRef.current) mediaRef.current.value = '' }}
+                      style={{ position: 'absolute', top: 6, right: 6, background: 'rgba(0,0,0,0.5)', color: '#fff', border: 'none', borderRadius: '50%', width: 24, height: 24, cursor: 'pointer', fontSize: 12 }}>
+                      ✕
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => mediaRef.current?.click()}
+                    disabled={uploadingMedia}
+                    style={{ padding: '9px 16px', border: '1px dashed #ccc', borderRadius: 8, background: '#fafafa', color: '#888', cursor: 'pointer', fontSize: 13, width: '100%' }}>
+                    {uploadingMedia ? 'Keliama...' : '🖼 Įkelti paveikslėlį / vaizdo įrašą'}
+                  </button>
+                )}
               </div>
 
               <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', paddingTop: 4 }}>

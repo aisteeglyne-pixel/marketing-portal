@@ -75,11 +75,12 @@ export default function ClientDetailPage() {
   const [posts, setPosts] = useState<ContentPost[]>([])
   const [files, setFiles] = useState<FileRecord[]>([])
   const [loading, setLoading] = useState(true)
+  const [assignableUsers, setAssignableUsers] = useState<{ id: string; label: string }[]>([])
   const [uploading, setUploading] = useState(false)
   const [uploadFolder, setUploadFolder] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
   const [showTaskForm, setShowTaskForm] = useState(false)
-  const [newTask, setNewTask] = useState({ title: '', description: '', priority: 'medium', due_date: '' })
+  const [newTask, setNewTask] = useState({ title: '', description: '', priority: 'medium', due_date: '', assigned_to: '' })
   const [showGoalForm, setShowGoalForm] = useState(false)
   const [newGoal, setNewGoal] = useState({ title: '', target_value: '', current_value: '0', unit: '', deadline: '' })
 
@@ -118,6 +119,16 @@ export default function ClientDetailPage() {
       setTasks(tasksData || [])
       setPosts(postsData || [])
       setFiles(filesData || [])
+
+      const { data: users } = await supabase
+        .from('profiles')
+        .select('id, full_name, email, role')
+        .or(`agency_id.eq.${p.agency_id},client_id.eq.${clientId}`)
+      setAssignableUsers((users || []).map(u => ({
+        id: u.id,
+        label: `${u.full_name || u.email} (${u.role === 'agency_admin' ? 'agentūra' : 'klientas'})`,
+      })))
+
       setLoading(false)
     }
     load()
@@ -134,10 +145,11 @@ export default function ClientDetailPage() {
       due_date: newTask.due_date || null,
       status: 'backlog',
       type: 'agency_task',
+      assigned_to: newTask.assigned_to || null,
       created_by: profile.id,
     }).select().single()
     if (data) setTasks(prev => [data, ...prev])
-    setNewTask({ title: '', description: '', priority: 'medium', due_date: '' })
+    setNewTask({ title: '', description: '', priority: 'medium', due_date: '', assigned_to: '' })
     setShowTaskForm(false)
   }
 
@@ -379,6 +391,15 @@ export default function ClientDetailPage() {
                   style={{ padding: '9px 12px', border: '1px solid #e5e5e5', borderRadius: 8, fontSize: 14 }}
                 />
               </div>
+              <select
+                value={newTask.assigned_to}
+                onChange={e => setNewTask(p => ({ ...p, assigned_to: e.target.value }))}
+                style={{ padding: '9px 12px', border: '1px solid #e5e5e5', borderRadius: 8, fontSize: 14 }}>
+                <option value="">Atsakingas asmuo (neprivaloma)</option>
+                {assignableUsers.map(u => (
+                  <option key={u.id} value={u.id}>{u.label}</option>
+                ))}
+              </select>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
                 <button type="submit" className="btn-primary">{lt.common.save}</button>
                 <button type="button" className="btn-secondary" onClick={() => setShowTaskForm(false)}>{lt.common.cancel}</button>
