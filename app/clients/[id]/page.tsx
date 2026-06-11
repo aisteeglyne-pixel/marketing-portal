@@ -353,7 +353,7 @@ export default function ClientDetailPage() {
             {lt.clientDetail.goals.noGoals}
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '0.75rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem' }}>
             {goals.map(goal => {
               const pct = goal.target_value > 0
                 ? Math.min(100, Math.round((goal.current_value / goal.target_value) * 100))
