@@ -87,6 +87,7 @@ export default function ClientDetailPage() {
   const [newGoal, setNewGoal] = useState({ title: '', target_value: '', current_value: '0', unit: '', deadline: '' })
   const [editingGoalId, setEditingGoalId] = useState<string | null>(null)
   const [editingGoalValue, setEditingGoalValue] = useState('')
+  const [selectedFolder, setSelectedFolder] = useState<string | null>(null)
 
   useEffect(() => {
     async function load() {
@@ -539,19 +540,105 @@ export default function ClientDetailPage() {
 
         {/* ── ATASKAITOS ── */}
         <SectionHeader id="ataskaitos" title={lt.clientDetail.sections.reports} />
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem' }}>
-          {[
-            { label: lt.clientDetail.reports.published, value: statsPublished, color: '#4338CA' },
-            { label: lt.clientDetail.reports.pendingApproval, value: statsPending, color: '#92400E' },
-            { label: lt.clientDetail.reports.drafts, value: statsDrafts, color: '#666' },
-            { label: lt.clientDetail.reports.thisMonth, value: statsThisMonth, color: '#27500A' },
-          ].map(s => (
-            <div key={s.label} className="card" style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 32, fontWeight: 700, color: s.color }}>{s.value}</div>
-              <div style={{ fontSize: 12, color: '#888', marginTop: 4 }}>{s.label}</div>
+        {(() => {
+          // Skaičiavimai
+          const byPlatform: Record<string, number> = {}
+          posts.filter(p => p.status === 'published').forEach(p => {
+            byPlatform[p.platform] = (byPlatform[p.platform] || 0) + 1
+          })
+          const maxPlatformCount = Math.max(...Object.values(byPlatform), 1)
+
+          const byMonth: Record<string, number> = {}
+          posts.filter(p => p.status === 'published' && p.published_at).forEach(p => {
+            const key = new Date(p.published_at!).toLocaleDateString('lt-LT', { year: 'numeric', month: 'short' })
+            byMonth[key] = (byMonth[key] || 0) + 1
+          })
+          const maxMonthCount = Math.max(...Object.values(byMonth), 1)
+
+          const approvalRate = posts.filter(p => p.status === 'review' || p.status === 'approved' || p.status === 'published').length
+          const approvedCount = posts.filter(p => p.status === 'approved' || p.status === 'published').length
+          const approvalPct = approvalRate > 0 ? Math.round((approvedCount / approvalRate) * 100) : 0
+
+          const platformColors: Record<string, string> = {
+            Instagram: '#E1306C', Facebook: '#1877F2', LinkedIn: '#0A66C2',
+            TikTok: '#000', X: '#14171A', YouTube: '#FF0000',
+          }
+
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {/* KPI eilutė */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem' }}>
+                {[
+                  { label: 'Paskelbta iš viso', value: statsPublished, color: '#4338CA', icon: '✓' },
+                  { label: 'Šį mėnesį', value: statsThisMonth, color: '#16A34A', icon: '📅' },
+                  { label: 'Laukia tvirtinimo', value: statsPending, color: '#D97706', icon: '⏳' },
+                  { label: 'Tvirtinimo rodiklis', value: `${approvalPct}%`, color: '#6c63ff', icon: '📊' },
+                ].map(s => (
+                  <div key={s.label} className="card" style={{ padding: '1.25rem 1rem' }}>
+                    <div style={{ fontSize: 11, color: '#aaa', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>
+                      {s.icon} {s.label}
+                    </div>
+                    <div style={{ fontSize: 28, fontWeight: 700, color: s.color }}>{s.value}</div>
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                {/* Pagal platformą */}
+                <div className="card">
+                  <div style={{ fontSize: 13, fontWeight: 600, marginBottom: '1rem', color: '#333' }}>
+                    Paskelbta pagal platformą
+                  </div>
+                  {Object.keys(byPlatform).length === 0 ? (
+                    <p style={{ fontSize: 13, color: '#ccc', fontStyle: 'italic' }}>Dar nėra paskelbtų įrašų</p>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      {Object.entries(byPlatform).sort((a, b) => b[1] - a[1]).map(([pl, count]) => (
+                        <div key={pl} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <div style={{
+                            width: 24, height: 24, borderRadius: 6, flexShrink: 0,
+                            background: platformColors[pl] || '#999',
+                            color: '#fff', fontSize: 9, fontWeight: 700,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          }}>
+                            {pl.slice(0, 2).toUpperCase()}
+                          </div>
+                          <div style={{ flex: 1, fontSize: 13 }}>{pl}</div>
+                          <div style={{ width: 90, height: 7, background: '#f0f0f0', borderRadius: 99, overflow: 'hidden' }}>
+                            <div style={{ width: `${Math.round((count / maxPlatformCount) * 100)}%`, height: '100%', background: platformColors[pl] || 'var(--brand-600)', borderRadius: 99 }} />
+                          </div>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: '#444', minWidth: 18, textAlign: 'right' }}>{count}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Pagal mėnesį */}
+                <div className="card">
+                  <div style={{ fontSize: 13, fontWeight: 600, marginBottom: '1rem', color: '#333' }}>
+                    Publikavimo istorija
+                  </div>
+                  {Object.keys(byMonth).length === 0 ? (
+                    <p style={{ fontSize: 13, color: '#ccc', fontStyle: 'italic' }}>Dar nėra publikavimo istorijos</p>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {Object.entries(byMonth).slice(-6).reverse().map(([month, count]) => (
+                        <div key={month} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <div style={{ width: 80, fontSize: 12, color: '#666', flexShrink: 0 }}>{month}</div>
+                          <div style={{ flex: 1, height: 7, background: '#f0f0f0', borderRadius: 99, overflow: 'hidden' }}>
+                            <div style={{ width: `${Math.round((count / maxMonthCount) * 100)}%`, height: '100%', background: 'var(--brand-600)', borderRadius: 99 }} />
+                          </div>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: '#444', minWidth: 18, textAlign: 'right' }}>{count}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
-          ))}
-        </div>
+          )
+        })()}
 
         {/* ── FAILAI ── */}
         <div id="failai" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '2rem', borderTop: '1px solid #f0f0f0', marginBottom: '1rem' }}>
@@ -611,56 +698,114 @@ export default function ClientDetailPage() {
           <div style={{ marginBottom: '1rem', fontSize: 13, color: '#888' }}>⏳ Keliama...</div>
         )}
         {files.length === 0 ? (
-          <div className="card" style={{ color: '#aaa', textAlign: 'center', padding: '2rem', marginBottom: '2rem' }}>
-            {lt.clientDetail.files.noFiles}
+          <div className="card" style={{ color: '#aaa', textAlign: 'center', padding: '3rem', marginBottom: '2rem' }}>
+            <div style={{ fontSize: 32, marginBottom: 8 }}>📁</div>
+            <div>{lt.clientDetail.files.noFiles}</div>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginBottom: '2rem' }}>
+          <div style={{ marginBottom: '2rem' }}>
             {(() => {
-              // Grupuoti pagal aplanką
-              const grouped: Record<string, FileRecord[]> = {}
+              // Case-insensitive aplankai
+              const folderMap: Record<string, { displayName: string; files: FileRecord[] }> = {}
               files.forEach(f => {
-                const key = f.folder || '—'
-                if (!grouped[key]) grouped[key] = []
-                grouped[key].push(f)
+                const key = f.folder ? f.folder.toLowerCase().trim() : '—'
+                if (!folderMap[key]) folderMap[key] = { displayName: f.folder || '—', files: [] }
+                folderMap[key].files.push(f)
               })
-              const folderKeys = Object.keys(grouped).sort((a, b) =>
-                a === '—' ? 1 : b === '—' ? -1 : a.localeCompare(b)
-              )
-              return folderKeys.map(folderName => (
-                <div key={folderName}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: '0.5rem' }}>
-                    <span style={{ fontSize: 15 }}>{folderName === '—' ? '📁' : '📂'}</span>
-                    <span style={{ fontSize: 13, fontWeight: 600, color: '#555' }}>
-                      {folderName === '—' ? 'Be aplanko' : folderName}
-                    </span>
-                    <span style={{ fontSize: 12, color: '#aaa' }}>({grouped[folderName].length})</span>
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                    {grouped[folderName].map(file => (
-                      <div key={file.id} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
-                          <span style={{ fontSize: 20 }}>{fileTypeIcons[file.file_type] || '📎'}</span>
-                          <div style={{ minWidth: 0 }}>
-                            <div style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                              {file.file_name}
+              const namedFolders = Object.entries(folderMap)
+                .filter(([k]) => k !== '—')
+                .sort((a, b) => a[0].localeCompare(b[0]))
+              const unfoldered = folderMap['—']?.files || []
+              const visibleFiles = selectedFolder
+                ? (folderMap[selectedFolder]?.files || [])
+                : null
+
+              return (
+                <>
+                  {/* Aplankų kortelės */}
+                  {namedFolders.length > 0 && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem', marginBottom: '1.25rem' }}>
+                      {selectedFolder && (
+                        <button onClick={() => setSelectedFolder(null)} style={{
+                          display: 'flex', alignItems: 'center', gap: 6,
+                          padding: '6px 12px', borderRadius: 8, border: '1px solid #e5e5e5',
+                          background: '#fff', cursor: 'pointer', fontSize: 12, color: '#888',
+                        }}>
+                          ← Visi failai
+                        </button>
+                      )}
+                      {namedFolders.map(([key, { displayName, files: fls }]) => (
+                        <button key={key} onClick={() => setSelectedFolder(selectedFolder === key ? null : key)} style={{
+                          display: 'flex', alignItems: 'center', gap: 8,
+                          padding: '7px 14px', borderRadius: 8,
+                          border: `1px solid ${selectedFolder === key ? '#6c63ff' : '#e5e5e5'}`,
+                          background: selectedFolder === key ? '#EEF2FF' : '#fff',
+                          cursor: 'pointer', fontSize: 13,
+                          color: selectedFolder === key ? '#4338CA' : '#444',
+                          fontWeight: selectedFolder === key ? 600 : 400,
+                        }}>
+                          <span style={{ fontSize: 16 }}>📂</span>
+                          {displayName}
+                          <span style={{ fontSize: 11, color: selectedFolder === key ? '#6366F1' : '#aaa', marginLeft: 2 }}>
+                            {fls.length}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Failų tinklelis */}
+                  {(() => {
+                    const toShow = visibleFiles || [
+                      ...namedFolders.flatMap(([, { files: fls }]) => fls),
+                      ...unfoldered,
+                    ]
+                    if (toShow.length === 0) return (
+                      <p style={{ fontSize: 13, color: '#aaa', fontStyle: 'italic' }}>Šiame aplanke failų nėra</p>
+                    )
+                    return (
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '0.75rem' }}>
+                        {toShow.map(file => (
+                          <a key={file.id} href={file.file_url} target="_blank" rel="noopener noreferrer"
+                            style={{ textDecoration: 'none', display: 'block' }}>
+                            <div style={{
+                              borderRadius: 10, overflow: 'hidden',
+                              border: '1px solid #eee', background: '#fff',
+                              transition: 'box-shadow 0.15s',
+                            }}
+                              onMouseEnter={e => (e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.10)')}
+                              onMouseLeave={e => (e.currentTarget.style.boxShadow = 'none')}
+                            >
+                              {/* Thumbnail zona */}
+                              <div style={{ height: 100, background: '#f8f8f8', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                {file.file_type === 'photo' ? (
+                                  <img src={file.file_url} alt={file.file_name}
+                                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                                ) : file.file_type === 'video' ? (
+                                  <div style={{ fontSize: 36, color: '#ccc' }}>🎬</div>
+                                ) : (
+                                  <div style={{ fontSize: 36, color: '#ccc' }}>{fileTypeIcons[file.file_type] || '📎'}</div>
+                                )}
+                              </div>
+                              {/* Pavadinimas */}
+                              <div style={{ padding: '8px 10px' }}>
+                                <div style={{ fontSize: 12, fontWeight: 500, color: '#333', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                  {file.file_name}
+                                </div>
+                                {file.uploaded_date && (
+                                  <div style={{ fontSize: 10, color: '#bbb', marginTop: 2 }}>
+                                    {new Date(file.uploaded_date).toLocaleDateString('lt-LT')}
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                            <div style={{ fontSize: 12, color: '#aaa' }}>
-                              {lt.clientDetail.files.types[file.file_type] || file.file_type}
-                              {file.uploaded_date && ` · ${lt.clientDetail.files.uploaded} ${new Date(file.uploaded_date).toLocaleDateString('lt-LT')}`}
-                            </div>
-                          </div>
-                        </div>
-                        <a href={file.file_url} target="_blank" rel="noopener noreferrer"
-                          className="btn-secondary"
-                          style={{ fontSize: 12, padding: '5px 12px', textDecoration: 'none', whiteSpace: 'nowrap' }}>
-                          {lt.clientDetail.files.download}
-                        </a>
+                          </a>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                </div>
-              ))
+                    )
+                  })()}
+                </>
+              )
             })()}
           </div>
         )}
