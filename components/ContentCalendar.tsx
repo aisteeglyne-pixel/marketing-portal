@@ -40,8 +40,10 @@ export default function ContentCalendar({ posts, clientId, agencyId, role, onPos
 
   // New post form state
   const [platform, setPlatform] = useState('Instagram')
+  const [contentType, setContentType] = useState<'post' | 'story' | 'reel'>('post')
   const [caption, setCaption] = useState('')
   const [publishDate, setPublishDate] = useState('')
+  const [publishTime, setPublishTime] = useState('10:00')
   const [status, setStatus] = useState<'draft' | 'review'>('draft')
   const [mediaUrl, setMediaUrl] = useState<string | null>(null)
   const [mediaPreview, setMediaPreview] = useState<string | null>(null)
@@ -113,8 +115,10 @@ export default function ContentCalendar({ posts, clientId, agencyId, role, onPos
 
   function resetForm() {
     setPlatform('Instagram')
+    setContentType('post')
     setCaption('')
     setPublishDate('')
+    setPublishTime('10:00')
     setStatus('draft')
     setMediaUrl(null)
     setMediaPreview(null)
@@ -242,182 +246,290 @@ export default function ContentCalendar({ posts, clientId, agencyId, role, onPos
         <PostModal post={selectedPost} clientId={clientId} role={role} onClose={() => setSelectedPost(null)} onUpdate={handlePostUpdate} />
       )}
 
-      {/* ── NAUJO ĮRAŠO MODALAS (Kontentino stilius) ── */}
+      {/* ── NAUJO ĮRAŠO MODALAS (DAR Content stilius) ── */}
       {showNewPost && (
         <div onClick={resetForm} style={{
-          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)',
           zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem',
         }}>
           <div onClick={e => e.stopPropagation()} style={{
-            background: '#fff', borderRadius: 16, width: '100%', maxWidth: 860,
-            maxHeight: '92vh', overflow: 'hidden', display: 'flex', flexDirection: 'column',
-            boxShadow: '0 24px 80px rgba(0,0,0,0.18)',
+            background: '#fff', borderRadius: 16, width: '100%', maxWidth: 900,
+            maxHeight: '94vh', overflow: 'hidden', display: 'flex', flexDirection: 'column',
+            boxShadow: '0 24px 80px rgba(0,0,0,0.20)',
           }}>
+
             {/* Header */}
-            <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <span style={{ fontSize: 16, fontWeight: 600 }}>Naujas įrašas</span>
-                {/* Platform selector */}
-                <div style={{ display: 'flex', gap: 6 }}>
-                  {PLATFORMS.map(p => (
-                    <button key={p.id} type="button" onClick={() => setPlatform(p.id)} style={{
-                      width: 32, height: 32, borderRadius: 8, border: 'none', cursor: 'pointer',
-                      background: platform === p.id ? p.color : '#f0f0f0',
-                      color: platform === p.id ? '#fff' : '#888',
-                      fontSize: 11, fontWeight: 700,
-                      outline: platform === p.id ? `2px solid ${p.color}` : 'none',
-                      outlineOffset: 2,
-                      transition: 'all 0.15s',
-                    }}>
-                      {p.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <button onClick={resetForm} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: '#aaa', lineHeight: 1 }}>✕</button>
+            <div style={{ padding: '14px 20px', borderBottom: '1px solid #f0f0f0', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+              <span style={{ fontSize: 18 }}>✍️</span>
+              <h3 style={{ fontSize: 15, fontWeight: 700, margin: 0 }}>Naujas įrašas</h3>
+              <span style={{ fontSize: 12, color: '#aaa', marginLeft: 4 }}>Visi laukai išsaugomi automatiškai</span>
+              <button onClick={resetForm} style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: '#bbb', lineHeight: 1, padding: '4px 6px' }}>✕</button>
             </div>
 
-            {/* Body: dviejų kolonų */}
+            {/* Body */}
             <form onSubmit={e => { e.preventDefault(); handleCreate() }} style={{ display: 'flex', flex: 1, overflow: 'hidden', minHeight: 0 }}>
 
-              {/* Kairė: redagavimas */}
-              <div style={{ flex: 1, padding: '1.25rem 1.5rem', overflowY: 'auto', borderRight: '1px solid #f0f0f0', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {/* ─── KAIRĖ: forma ─── */}
+              <div style={{ flex: 1, padding: '20px', overflowY: 'auto', borderRight: '1px solid #f0f0f0' }}>
 
-                {/* Media zona */}
-                <div
-                  onDragOver={e => { e.preventDefault(); setDragOver(true) }}
-                  onDragLeave={() => setDragOver(false)}
-                  onDrop={handleDrop}
-                  onClick={() => !mediaPreview && mediaRef.current?.click()}
-                  style={{
-                    border: `2px dashed ${dragOver ? currentPlatform.color : '#e0e0e0'}`,
-                    borderRadius: 12, overflow: 'hidden',
-                    background: dragOver ? currentPlatform.color + '08' : '#fafafa',
-                    cursor: mediaPreview ? 'default' : 'pointer',
-                    minHeight: mediaPreview ? 0 : 140,
-                    position: 'relative',
-                    transition: 'all 0.15s',
-                  }}>
-                  {uploadingMedia ? (
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 140, color: '#aaa', fontSize: 13 }}>
-                      Keliama...
-                    </div>
-                  ) : mediaPreview ? (
-                    <>
-                      <img src={mediaPreview} alt="preview" style={{ width: '100%', maxHeight: 260, objectFit: 'cover', display: 'block' }} />
-                      <button type="button" onClick={e => { e.stopPropagation(); setMediaUrl(null); setMediaPreview(null); if (mediaRef.current) mediaRef.current.value = '' }}
-                        style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.55)', color: '#fff', border: 'none', borderRadius: '50%', width: 28, height: 28, cursor: 'pointer', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        ✕
+                {/* 1. Turinio tipas */}
+                <div style={{ marginBottom: 16 }}>
+                  <label style={labelStyle}>Turinio tipas</label>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    {([
+                      { id: 'post',  icon: '📝', label: 'Įrašas' },
+                      { id: 'story', icon: '📖', label: 'Istorija' },
+                      { id: 'reel',  icon: '🎬', label: 'Reels' },
+                    ] as const).map(t => (
+                      <button key={t.id} type="button" onClick={() => setContentType(t.id)} style={{
+                        flex: 1, padding: '9px 8px', borderRadius: 8,
+                        border: `2px solid ${contentType === t.id ? '#6c63ff' : '#e5e5e5'}`,
+                        background: contentType === t.id ? '#EEF2FF' : '#fff',
+                        cursor: 'pointer', fontSize: 12, fontWeight: 600,
+                        color: contentType === t.id ? '#4338CA' : '#888',
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+                        transition: 'all 0.15s',
+                      }}>
+                        <span style={{ fontSize: 18 }}>{t.icon}</span>
+                        {t.label}
                       </button>
-                      <button type="button" onClick={e => { e.stopPropagation(); mediaRef.current?.click() }}
-                        style={{ position: 'absolute', bottom: 8, right: 8, background: 'rgba(0,0,0,0.55)', color: '#fff', border: 'none', borderRadius: 8, padding: '4px 10px', cursor: 'pointer', fontSize: 12 }}>
-                        Keisti
-                      </button>
-                    </>
-                  ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 140, gap: 8, color: '#bbb' }}>
-                      <span style={{ fontSize: 32 }}>🖼</span>
-                      <span style={{ fontSize: 13 }}>Nutempk arba spustelėk įkelti media</span>
-                      <span style={{ fontSize: 11 }}>JPG, PNG, MP4, MOV</span>
-                    </div>
-                  )}
-                  <input ref={mediaRef} type="file" accept="image/*,video/*" onChange={handleMediaSelect} style={{ display: 'none' }} />
+                    ))}
+                  </div>
                 </div>
 
-                {/* Caption */}
-                <div style={{ position: 'relative' }}>
+                {/* 2. Platforma */}
+                <div style={{ marginBottom: 16 }}>
+                  <label style={labelStyle}>Platforma</label>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    {PLATFORMS.map(p => (
+                      <button key={p.id} type="button" onClick={() => setPlatform(p.id)} style={{
+                        display: 'flex', alignItems: 'center', gap: 6,
+                        padding: '7px 12px', borderRadius: 8, cursor: 'pointer',
+                        border: `2px solid ${platform === p.id ? p.color : '#e5e5e5'}`,
+                        background: platform === p.id ? p.color + '12' : '#fff',
+                        fontSize: 12, fontWeight: 600, color: platform === p.id ? p.color : '#888',
+                        opacity: platform === p.id ? 1 : 0.6,
+                        transition: 'all 0.15s',
+                      }}>
+                        <div style={{
+                          width: 20, height: 20, borderRadius: 4,
+                          background: p.color, display: 'flex', alignItems: 'center',
+                          justifyContent: 'center', color: '#fff', fontSize: 10, fontWeight: 700,
+                        }}>{p.label}</div>
+                        {p.id}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 3. AI bar */}
+                <div style={{
+                  background: 'linear-gradient(135deg, #EEF2FF, #F5F3FF)',
+                  border: '1.5px solid #C7D2FE', borderRadius: 8,
+                  padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 10,
+                  marginBottom: 16, cursor: 'pointer',
+                }}
+                  onMouseEnter={e => (e.currentTarget.style.background = '#EEF2FF')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'linear-gradient(135deg, #EEF2FF, #F5F3FF)')}
+                >
+                  <span style={{ fontSize: 18 }}>✨</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: '#4338CA', flex: 1 }}>
+                    Generuoti su AI — parašyk geresnius tekstus per sekundes
+                  </span>
+                  <span style={{ background: '#6c63ff', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 10 }}>AI</span>
+                </div>
+
+                {/* 4. Tekstas (caption) */}
+                <div style={{ marginBottom: 16 }}>
+                  <label style={labelStyle}>Tekstas</label>
                   <textarea
                     value={caption}
                     onChange={e => setCaption(e.target.value)}
-                    placeholder={`Parašyk ${platform} įrašo tekstą...`}
-                    rows={6}
+                    placeholder={`Rašyk ${platform} įrašo tekstą... Naudok #žymes ir @paminėjimus`}
+                    rows={5}
                     maxLength={currentPlatform.limit}
                     style={{
-                      width: '100%', padding: '12px', border: '1px solid #e5e5e5',
-                      borderRadius: 10, fontSize: 14, outline: 'none', resize: 'vertical',
+                      width: '100%', padding: '10px 12px', border: '1px solid #e5e5e5',
+                      borderRadius: 8, fontSize: 13, outline: 'none', resize: 'vertical',
                       boxSizing: 'border-box', lineHeight: 1.6, fontFamily: 'inherit',
                     }}
                   />
-                  <div style={{ textAlign: 'right', fontSize: 11, color: charsWarning ? '#DC2626' : '#aaa', marginTop: 4 }}>
-                    {caption.length} / {currentPlatform.limit}
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 4 }}>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: charsWarning ? '#DC2626' : '#aaa' }}>
+                      {caption.length} / {currentPlatform.limit}
+                    </span>
                   </div>
                 </div>
 
-                {/* Data + statusas */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                  <div>
-                    <label style={labelStyle}>Publikavimo data</label>
-                    <input type="datetime-local" value={publishDate} onChange={e => setPublishDate(e.target.value)}
-                      style={inputStyle} />
+                {/* 5. Media */}
+                <div style={{ marginBottom: 16 }}>
+                  <label style={labelStyle}>Vizualas / Media</label>
+                  <div
+                    onDragOver={e => { e.preventDefault(); setDragOver(true) }}
+                    onDragLeave={() => setDragOver(false)}
+                    onDrop={handleDrop}
+                    onClick={() => !mediaPreview && mediaRef.current?.click()}
+                    style={{
+                      border: `2px dashed ${dragOver ? '#6c63ff' : '#e0e0e0'}`,
+                      borderRadius: 10, overflow: 'hidden',
+                      background: dragOver ? '#EEF2FF' : '#fafafa',
+                      cursor: mediaPreview ? 'default' : 'pointer',
+                      position: 'relative', transition: 'all 0.2s',
+                    }}>
+                    {uploadingMedia ? (
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 100, color: '#aaa', fontSize: 13 }}>Keliama...</div>
+                    ) : mediaPreview ? (
+                      <>
+                        <img src={mediaPreview} alt="preview" style={{ width: '100%', maxHeight: 220, objectFit: 'cover', display: 'block' }} />
+                        <button type="button" onClick={e => { e.stopPropagation(); setMediaUrl(null); setMediaPreview(null); if (mediaRef.current) mediaRef.current.value = '' }}
+                          style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.6)', color: '#fff', border: 'none', borderRadius: '50%', width: 26, height: 26, cursor: 'pointer', fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+                        <button type="button" onClick={e => { e.stopPropagation(); mediaRef.current?.click() }}
+                          style={{ position: 'absolute', bottom: 8, right: 8, background: 'rgba(0,0,0,0.6)', color: '#fff', border: 'none', borderRadius: 8, padding: '4px 10px', cursor: 'pointer', fontSize: 11 }}>Keisti</button>
+                      </>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px 0', gap: 6, color: '#bbb' }}>
+                        <span style={{ fontSize: 28 }}>🖼️</span>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: '#6c63ff' }}>Įkelti nuotrauką ar vaizdo įrašą</span>
+                        <span style={{ fontSize: 11 }}>Nutempk arba spustelėk · JPG, PNG, MP4 · Max 50MB</span>
+                      </div>
+                    )}
+                    <input ref={mediaRef} type="file" accept="image/*,video/*" onChange={handleMediaSelect} style={{ display: 'none' }} />
                   </div>
-                  <div>
-                    <label style={labelStyle}>Statusas</label>
-                    <select value={status} onChange={e => setStatus(e.target.value as 'draft' | 'review')} style={inputStyle}>
-                      <option value="draft">📝 Juodraštis</option>
-                      <option value="review">👁 Siųsti peržiūrai</option>
-                    </select>
+                </div>
+
+                {/* 6. Data ir laikas */}
+                <div style={{ marginBottom: 16 }}>
+                  <label style={labelStyle}>Planuojama publikacija</label>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <input type="date" value={publishDate} onChange={e => setPublishDate(e.target.value)} style={{ ...inputStyle, flex: 1 }} />
+                    <input type="time" value={publishTime} onChange={e => setPublishTime(e.target.value)} style={{ ...inputStyle, width: 110 }} />
+                  </div>
+                </div>
+
+                {/* 7. Workflow */}
+                <div>
+                  <label style={labelStyle}>Siųsti kaip</label>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    {([
+                      { val: 'draft',     icon: '💾', label: 'Juodraštis' },
+                      { val: 'review',    icon: '👁️', label: 'Vidinė peržiūra' },
+                    ] as const).map(w => (
+                      <button key={w.val} type="button" onClick={() => setStatus(w.val)} style={{
+                        padding: '8px 14px', borderRadius: 8,
+                        border: `2px solid ${status === w.val ? '#6c63ff' : '#e5e5e5'}`,
+                        background: status === w.val ? '#EEF2FF' : '#fff',
+                        color: status === w.val ? '#4338CA' : '#666',
+                        cursor: 'pointer', fontSize: 12, fontWeight: 600,
+                        display: 'flex', alignItems: 'center', gap: 6,
+                        transition: 'all 0.15s',
+                      }}>
+                        <span>{w.icon}</span>{w.label}
+                      </button>
+                    ))}
                   </div>
                 </div>
               </div>
 
-              {/* Dešinė: peržiūra */}
-              <div style={{ width: 280, flexShrink: 0, padding: '1.25rem', overflowY: 'auto', background: '#f8f8f8', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                <div style={{ fontSize: 11, fontWeight: 600, color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Peržiūra — {platform}
+              {/* ─── DEŠINĖ: telefono peržiūra ─── */}
+              <div style={{ width: 300, flexShrink: 0, padding: '20px', overflowY: 'auto', background: '#f8f9fb' }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 14 }}>
+                  Gyva peržiūra
                 </div>
-                {/* Mock phone frame */}
-                <div style={{ background: '#fff', borderRadius: 12, overflow: 'hidden', border: '1px solid #e5e5e5', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
-                  {/* Profile bar */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', borderBottom: '1px solid #f5f5f5' }}>
-                    <div style={{ width: 28, height: 28, borderRadius: '50%', background: currentPlatform.color, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 11, fontWeight: 700 }}>
+
+                {/* Platformų tab'ai */}
+                <div style={{ display: 'flex', gap: 4, marginBottom: 12 }}>
+                  {PLATFORMS.slice(0, 3).map(p => (
+                    <button key={p.id} type="button" onClick={() => setPlatform(p.id)} style={{
+                      flex: 1, padding: '4px 0', borderRadius: 6, border: 'none', cursor: 'pointer',
+                      background: platform === p.id ? p.color : '#ebebeb',
+                      color: platform === p.id ? '#fff' : '#888',
+                      fontSize: 11, fontWeight: 700, transition: 'all 0.15s',
+                    }}>{p.label}</button>
+                  ))}
+                </div>
+
+                {/* Telefono frame */}
+                <div style={{
+                  background: '#fff', borderRadius: 20, border: '3px solid #ddd',
+                  overflow: 'hidden', boxShadow: '0 8px 24px rgba(0,0,0,0.1)',
+                  maxWidth: 260, margin: '0 auto',
+                }}>
+                  {/* Notch bar */}
+                  <div style={{ height: 20, background: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div style={{ width: 40, height: 4, background: '#ddd', borderRadius: 2 }} />
+                  </div>
+                  {/* Post header */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px' }}>
+                    <div style={{ width: 28, height: 28, borderRadius: '50%', background: currentPlatform.color, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 10, fontWeight: 700, flexShrink: 0 }}>
                       {currentPlatform.label}
                     </div>
                     <div>
-                      <div style={{ fontSize: 12, fontWeight: 600 }}>Jūsų paskyra</div>
-                      <div style={{ fontSize: 10, color: '#aaa' }}>{publishDate ? new Date(publishDate).toLocaleDateString('lt-LT') : 'Data nenustatyta'}</div>
+                      <div style={{ fontSize: 11, fontWeight: 700 }}>jūsų_paskyra</div>
+                      <div style={{ fontSize: 9, color: '#aaa' }}>Sponsored</div>
                     </div>
+                    <div style={{ marginLeft: 'auto', fontSize: 14, color: '#aaa' }}>···</div>
                   </div>
-                  {/* Media preview */}
-                  {mediaPreview && (
-                    <img src={mediaPreview} alt="preview" style={{ width: '100%', aspectRatio: platform === 'Instagram' ? '1' : platform === 'LinkedIn' ? '1.91/1' : 'auto', objectFit: 'cover', display: 'block', maxHeight: 200 }} />
+                  {/* Media */}
+                  {mediaPreview ? (
+                    <img src={mediaPreview} alt="" style={{
+                      width: '100%',
+                      aspectRatio: contentType === 'story' ? '9/16' : '1',
+                      objectFit: 'cover', display: 'block', maxHeight: 200,
+                    }} />
+                  ) : (
+                    <div style={{
+                      background: '#f0f0f0', aspectRatio: contentType === 'story' ? '9/16' : '1',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      color: '#ccc', fontSize: 24, maxHeight: 200, overflow: 'hidden',
+                    }}>🖼️</div>
                   )}
-                  {!mediaPreview && (
-                    <div style={{ background: '#f0f0f0', aspectRatio: '1', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ccc', fontSize: 24 }}>🖼</div>
-                  )}
+                  {/* Actions */}
+                  <div style={{ padding: '8px 12px 2px', display: 'flex', gap: 10 }}>
+                    <span style={{ fontSize: 14 }}>❤️</span>
+                    <span style={{ fontSize: 14 }}>💬</span>
+                    <span style={{ fontSize: 14 }}>✈️</span>
+                  </div>
                   {/* Caption preview */}
-                  <div style={{ padding: '10px 12px' }}>
+                  <div style={{ padding: '4px 12px 12px' }}>
                     {caption ? (
-                      <p style={{ fontSize: 12, lineHeight: 1.5, margin: 0, color: '#333',
-                        overflow: 'hidden', maxHeight: '6em' }}>
-                        {caption}
+                      <p style={{ fontSize: 11, lineHeight: 1.5, margin: 0, color: '#333', overflow: 'hidden', maxHeight: '5em' }}>
+                        <strong>jūsų_paskyra</strong> {caption}
                       </p>
                     ) : (
-                      <p style={{ fontSize: 12, color: '#ccc', fontStyle: 'italic', margin: 0 }}>Tekstas pasirodys čia...</p>
+                      <p style={{ fontSize: 11, color: '#ccc', fontStyle: 'italic', margin: 0 }}>Tekstas pasirodys čia...</p>
                     )}
                   </div>
-                  {/* Like/comment bar */}
-                  <div style={{ padding: '6px 12px 10px', display: 'flex', gap: 12, borderTop: '1px solid #f5f5f5' }}>
-                    <span style={{ fontSize: 16 }}>❤️</span>
-                    <span style={{ fontSize: 16 }}>💬</span>
-                    <span style={{ fontSize: 16 }}>📤</span>
-                  </div>
+                </div>
+
+                {/* Char counts */}
+                <div style={{ marginTop: 16 }}>
+                  <div style={{ fontSize: 11, color: '#aaa', marginBottom: 6, fontWeight: 600 }}>Simbolių skaičius:</div>
+                  {PLATFORMS.map(p => (
+                    <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, fontWeight: 600, marginBottom: 3, color: caption.length > p.limit * 0.9 ? '#DC2626' : '#555' }}>
+                      <span>{p.id}</span>
+                      <span>{caption.length} / {p.limit.toLocaleString()}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </form>
 
             {/* Footer */}
-            <div style={{ padding: '1rem 1.5rem', borderTop: '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+            <div style={{ padding: '12px 20px', borderTop: '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
               <span style={{ fontSize: 12, color: '#aaa' }}>
                 {uploadingMedia ? '⏳ Media keliama...' : mediaUrl ? '✓ Media įkelta' : ''}
               </span>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <div style={{ display: 'flex', gap: 8 }}>
                 <button type="button" onClick={resetForm} className="btn-secondary">Atšaukti</button>
-                <button
-                  onClick={handleCreate}
+                <button type="button" onClick={() => { setStatus('draft'); handleCreate() }}
                   disabled={submitting || uploadingMedia}
-                  className="btn-primary"
-                  style={{ background: currentPlatform.color, minWidth: 120 }}>
-                  {submitting ? 'Kuriama...' : status === 'review' ? '📤 Siųsti peržiūrai' : '💾 Išsaugoti juodraštį'}
+                  className="btn-secondary">
+                  💾 Išsaugoti juodraštį
+                </button>
+                <button type="button" onClick={() => { setStatus('review'); handleCreate() }}
+                  disabled={submitting || uploadingMedia}
+                  className="btn-primary">
+                  {submitting ? 'Kuriama...' : '📤 Siųsti peržiūrai →'}
                 </button>
               </div>
             </div>
