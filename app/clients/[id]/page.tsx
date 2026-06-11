@@ -283,323 +283,256 @@ export default function ClientDetailPage() {
           ))}
         </div>
 
-        {/* ── TIKSLAI ── */}
-        <div id="tikslai" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '2rem', borderTop: '1px solid #f0f0f0', marginBottom: '1rem' }}>
-          <h2 style={{ fontSize: 17, fontWeight: 600 }}>{lt.clientDetail.sections.goals}</h2>
-          <button className="btn-primary" style={{ fontSize: 13, padding: '6px 14px' }} onClick={() => setShowGoalForm(v => !v)}>
-            + Naujas tikslas
-          </button>
-        </div>
-        {showGoalForm && (
-          <div className="card" style={{ marginBottom: '1rem' }}>
-            <form onSubmit={handleGoalCreate} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              <input
-                value={newGoal.title}
-                onChange={e => setNewGoal(p => ({ ...p, title: e.target.value }))}
-                placeholder="Tikslo pavadinimas (pvz. Pasiekti 5000 sekėjų)"
-                required
-                style={{ padding: '9px 12px', border: '1px solid #e5e5e5', borderRadius: 8, fontSize: 14, outline: 'none' }}
-              />
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: 11, color: '#aaa', marginBottom: 4, textTransform: 'uppercase' }}>Tikslinė reikšmė</label>
+        {/* ── TIKSLAI + UŽDUOTYS (du paneliai šalia šalia) ── */}
+        <div id="tikslai" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', alignItems: 'start', paddingTop: '2rem', borderTop: '1px solid #f0f0f0' }}>
+
+          {/* KAIRĖ: Tikslai */}
+          <div className="card" style={{ padding: '1.25rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h2 style={{ fontSize: 15, fontWeight: 600 }}>{lt.clientDetail.sections.goals}</h2>
+              <button className="btn-primary" style={{ fontSize: 12, padding: '5px 12px' }} onClick={() => setShowGoalForm(v => !v)}>
+                + Naujas tikslas
+              </button>
+            </div>
+            {showGoalForm && (
+              <form onSubmit={handleGoalCreate} style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', marginBottom: '1rem', padding: '0.75rem', background: '#f9f9f9', borderRadius: 10 }}>
+                <input
+                  value={newGoal.title}
+                  onChange={e => setNewGoal(p => ({ ...p, title: e.target.value }))}
+                  placeholder="Tikslo pavadinimas"
+                  required
+                  style={{ padding: '8px 10px', border: '1px solid #e5e5e5', borderRadius: 8, fontSize: 13, outline: 'none' }}
+                />
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
                   <input
                     type="number" min="0"
                     value={newGoal.target_value}
                     onChange={e => setNewGoal(p => ({ ...p, target_value: e.target.value }))}
-                    placeholder="5000"
+                    placeholder="Tikslas (pvz. 5000)"
                     required
-                    style={{ padding: '9px 12px', border: '1px solid #e5e5e5', borderRadius: 8, fontSize: 14, outline: 'none', width: '100%', boxSizing: 'border-box' }}
+                    style={{ padding: '8px 10px', border: '1px solid #e5e5e5', borderRadius: 8, fontSize: 13, outline: 'none' }}
                   />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: 11, color: '#aaa', marginBottom: 4, textTransform: 'uppercase' }}>Dabartinė reikšmė</label>
-                  <input
-                    type="number" min="0"
-                    value={newGoal.current_value}
-                    onChange={e => setNewGoal(p => ({ ...p, current_value: e.target.value }))}
-                    placeholder="0"
-                    style={{ padding: '9px 12px', border: '1px solid #e5e5e5', borderRadius: 8, fontSize: 14, outline: 'none', width: '100%', boxSizing: 'border-box' }}
-                  />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: 11, color: '#aaa', marginBottom: 4, textTransform: 'uppercase' }}>Vienetas</label>
                   <input
                     value={newGoal.unit}
                     onChange={e => setNewGoal(p => ({ ...p, unit: e.target.value }))}
-                    placeholder="sekėjai, %, įrašai..."
-                    style={{ padding: '9px 12px', border: '1px solid #e5e5e5', borderRadius: 8, fontSize: 14, outline: 'none', width: '100%', boxSizing: 'border-box' }}
+                    placeholder="Vienetas (sekėjai, %...)"
+                    style={{ padding: '8px 10px', border: '1px solid #e5e5e5', borderRadius: 8, fontSize: 13, outline: 'none' }}
                   />
                 </div>
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: 11, color: '#aaa', marginBottom: 4, textTransform: 'uppercase' }}>Terminas (neprivaloma)</label>
                 <input
                   type="date"
                   value={newGoal.deadline}
                   onChange={e => setNewGoal(p => ({ ...p, deadline: e.target.value }))}
-                  style={{ padding: '9px 12px', border: '1px solid #e5e5e5', borderRadius: 8, fontSize: 14, outline: 'none' }}
+                  style={{ padding: '8px 10px', border: '1px solid #e5e5e5', borderRadius: 8, fontSize: 13, outline: 'none' }}
                 />
-              </div>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button type="submit" className="btn-primary">{lt.common.save}</button>
-                <button type="button" className="btn-secondary" onClick={() => setShowGoalForm(false)}>{lt.common.cancel}</button>
-              </div>
-            </form>
-          </div>
-        )}
-        {goals.length === 0 ? (
-          <div className="card" style={{ color: '#aaa', textAlign: 'center', padding: '2rem' }}>
-            {lt.clientDetail.goals.noGoals}
-          </div>
-        ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem' }}>
-            {goals.map(goal => {
-              const pct = goal.target_value > 0
-                ? Math.min(100, Math.round((goal.current_value / goal.target_value) * 100))
-                : 0
-              const achieved = goal.current_value >= goal.target_value
-              const isEditing = editingGoalId === goal.id
-              return (
-                <div key={goal.id} className="card">
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                    <span style={{ fontWeight: 500 }}>{goal.title}</span>
-                    <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                      {achieved && <Badge label={lt.clientDetail.goals.achieved} style={{ bg: '#EAF3DE', color: '#27500A' }} />}
-                      {!isEditing && (
-                        <button
-                          onClick={() => { setEditingGoalId(goal.id); setEditingGoalValue(String(goal.current_value)) }}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: '#aaa', padding: '2px 6px' }}
-                          title="Atnaujinti progresą"
-                        >
-                          ✏️
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
-                    <div style={{ flex: 1, height: 8, background: '#f0f0f0', borderRadius: 4, overflow: 'hidden' }}>
-                      <div style={{
-                        width: `${pct}%`, height: '100%', borderRadius: 4,
-                        background: achieved ? '#4CAF50' : 'var(--brand-600)',
-                        transition: 'width 0.3s',
-                      }} />
-                    </div>
-                    {isEditing ? (
-                      <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-                        <input
-                          type="number" min="0"
-                          value={editingGoalValue}
-                          onChange={e => setEditingGoalValue(e.target.value)}
-                          onKeyDown={e => {
-                            if (e.key === 'Enter') handleGoalValueUpdate(goal.id, editingGoalValue)
-                            if (e.key === 'Escape') setEditingGoalId(null)
-                          }}
-                          autoFocus
-                          style={{ width: 70, padding: '3px 6px', border: '1px solid #6c63ff', borderRadius: 6, fontSize: 13, outline: 'none' }}
-                        />
-                        <span style={{ fontSize: 12, color: '#aaa' }}>/ {goal.target_value} {goal.unit}</span>
-                        <button onClick={() => handleGoalValueUpdate(goal.id, editingGoalValue)}
-                          style={{ background: 'var(--brand-600)', color: '#fff', border: 'none', borderRadius: 6, padding: '3px 8px', cursor: 'pointer', fontSize: 12 }}>
-                          ✓
-                        </button>
-                        <button onClick={() => setEditingGoalId(null)}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: '#aaa' }}>
-                          ✕
-                        </button>
-                      </div>
-                    ) : (
-                      <span style={{ fontSize: 13, color: '#666', whiteSpace: 'nowrap' }}>
-                        {goal.current_value} / {goal.target_value} {goal.unit}
-                      </span>
-                    )}
-                  </div>
-                  {goal.deadline && (
-                    <div style={{ fontSize: 12, color: '#aaa' }}>
-                      {lt.clientDetail.goals.deadline} {new Date(goal.deadline).toLocaleDateString('lt-LT')}
-                    </div>
-                  )}
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button type="submit" className="btn-primary" style={{ fontSize: 12, padding: '5px 12px' }}>{lt.common.save}</button>
+                  <button type="button" className="btn-secondary" style={{ fontSize: 12, padding: '5px 12px' }} onClick={() => setShowGoalForm(false)}>{lt.common.cancel}</button>
                 </div>
-              )
-            })}
-          </div>
-        )}
-
-        {/* ── UŽDUOTYS ── */}
-        <div id="uzduotys" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '2rem', borderTop: '1px solid #f0f0f0', marginBottom: '1rem' }}>
-          <h2 style={{ fontSize: 17, fontWeight: 600 }}>{lt.clientDetail.sections.tasks}</h2>
-          <button className="btn-primary" style={{ fontSize: 13, padding: '6px 14px' }} onClick={() => setShowTaskForm(v => !v)}>
-            + {lt.clientDetail.tasks.statuses.backlog === 'Eilėje' ? 'Nauja užduotis' : 'New task'}
-          </button>
-        </div>
-        {showTaskForm && (
-          <div className="card" style={{ marginBottom: '1rem' }}>
-            <form onSubmit={handleTaskCreate} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              <input
-                value={newTask.title}
-                onChange={e => setNewTask(p => ({ ...p, title: e.target.value }))}
-                placeholder="Užduoties pavadinimas"
-                required
-                style={{ padding: '9px 12px', border: '1px solid #e5e5e5', borderRadius: 8, fontSize: 14, outline: 'none' }}
-              />
-              <textarea
-                value={newTask.description}
-                onChange={e => setNewTask(p => ({ ...p, description: e.target.value }))}
-                placeholder="Aprašymas (neprivaloma)"
-                rows={2}
-                style={{ padding: '9px 12px', border: '1px solid #e5e5e5', borderRadius: 8, fontSize: 14, outline: 'none', resize: 'vertical' }}
-              />
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                <select
-                  value={newTask.priority}
-                  onChange={e => setNewTask(p => ({ ...p, priority: e.target.value }))}
-                  style={{ padding: '9px 12px', border: '1px solid #e5e5e5', borderRadius: 8, fontSize: 14 }}>
-                  <option value="low">{lt.clientDetail.tasks.priorities.low}</option>
-                  <option value="medium">{lt.clientDetail.tasks.priorities.medium}</option>
-                  <option value="high">{lt.clientDetail.tasks.priorities.high}</option>
-                </select>
-                <input
-                  type="date"
-                  value={newTask.due_date}
-                  onChange={e => setNewTask(p => ({ ...p, due_date: e.target.value }))}
-                  style={{ padding: '9px 12px', border: '1px solid #e5e5e5', borderRadius: 8, fontSize: 14 }}
-                />
-              </div>
-              <select
-                value={newTask.assigned_to}
-                onChange={e => setNewTask(p => ({ ...p, assigned_to: e.target.value }))}
-                style={{ padding: '9px 12px', border: '1px solid #e5e5e5', borderRadius: 8, fontSize: 14 }}>
-                <option value="">Atsakingas asmuo (neprivaloma)</option>
-                {assignableUsers.map(u => (
-                  <option key={u.id} value={u.id}>{u.label}</option>
-                ))}
-              </select>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button type="submit" className="btn-primary">{lt.common.save}</button>
-                <button type="button" className="btn-secondary" onClick={() => setShowTaskForm(false)}>{lt.common.cancel}</button>
-              </div>
-            </form>
-          </div>
-        )}
-        {(() => {
-          const activeTasks = tasks.filter(t => t.status !== 'done')
-          const doneTasks = tasks.filter(t => t.status === 'done')
-
-          async function handleCompleteTask(taskId: string) {
-            await supabase.from('tasks').update({ status: 'done' }).eq('id', taskId)
-            setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: 'done' } : t))
-          }
-
-          if (tasks.length === 0) return (
-            <div className="card" style={{ color: '#aaa', textAlign: 'center', padding: '2rem' }}>
-              {lt.clientDetail.tasks.noTasks}
-            </div>
-          )
-
-          return (
-            <>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                {activeTasks.map(task => (
-                  <div key={task.id} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-                    {/* Tick mygtukas */}
-                    <button
-                      onClick={() => handleCompleteTask(task.id)}
-                      title="Pažymėti kaip atlikta"
-                      style={{
-                        width: 22, height: 22, borderRadius: '50%',
-                        border: '2px solid #d0d0d0', background: '#fff',
-                        cursor: 'pointer', flexShrink: 0, display: 'flex',
-                        alignItems: 'center', justifyContent: 'center',
-                        fontSize: 11, color: 'transparent',
-                        transition: 'all 0.15s',
-                      }}
-                      onMouseEnter={e => {
-                        const b = e.currentTarget
-                        b.style.borderColor = '#4CAF50'
-                        b.style.background = '#EAF3DE'
-                        b.style.color = '#4CAF50'
-                      }}
-                      onMouseLeave={e => {
-                        const b = e.currentTarget
-                        b.style.borderColor = '#d0d0d0'
-                        b.style.background = '#fff'
-                        b.style.color = 'transparent'
-                      }}
-                    >✓</button>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: 500, marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {task.title}
+              </form>
+            )}
+            {goals.length === 0 ? (
+              <p style={{ fontSize: 13, color: '#aaa', fontStyle: 'italic' }}>{lt.clientDetail.goals.noGoals}</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                {goals.map(goal => {
+                  const pct = goal.target_value > 0
+                    ? Math.min(100, Math.round((goal.current_value / goal.target_value) * 100))
+                    : 0
+                  const achieved = goal.current_value >= goal.target_value
+                  const isEditing = editingGoalId === goal.id
+                  return (
+                    <div key={goal.id} style={{ padding: '10px 12px', borderRadius: 10, background: '#fafafa', border: '1px solid #f0f0f0' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+                        <span style={{ fontWeight: 500, fontSize: 13 }}>{goal.title}</span>
+                        <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                          {achieved && <Badge label={lt.clientDetail.goals.achieved} style={{ bg: '#EAF3DE', color: '#27500A' }} />}
+                          {!isEditing && (
+                            <button
+                              onClick={() => { setEditingGoalId(goal.id); setEditingGoalValue(String(goal.current_value)) }}
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: '#bbb', padding: '1px 4px' }}
+                              title="Atnaujinti progresą"
+                            >✏️</button>
+                          )}
+                        </div>
                       </div>
-                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-                        <button
-                          onClick={() => handleTaskStatusChange(task.id, task.status as TaskStatus)}
-                          style={{
-                            padding: '2px 8px', borderRadius: 12, fontSize: 12, fontWeight: 500,
-                            border: 'none', cursor: 'pointer',
-                            background: (taskStatusColors[task.status] || { bg: '#f0f0f0' }).bg,
-                            color: (taskStatusColors[task.status] || { color: '#666' }).color,
-                          }}
-                          title="Spustelėk norėdamas pakeisti statusą"
-                        >
-                          {lt.clientDetail.tasks.statuses[task.status as keyof typeof lt.clientDetail.tasks.statuses] || task.status} →
-                        </button>
-                        <Badge
-                          label={lt.clientDetail.tasks.priorities[task.priority as keyof typeof lt.clientDetail.tasks.priorities] || task.priority}
-                          style={priorityColors[task.priority] || { bg: '#f0f0f0', color: '#666' }}
-                        />
-                        {task.assigned_to && (
-                          <span style={{ fontSize: 12, color: '#666' }}>
-                            👤 {assignableUsers.find(u => u.id === task.assigned_to)?.label || '—'}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+                        <div style={{ flex: 1, height: 6, background: '#ebebeb', borderRadius: 3, overflow: 'hidden' }}>
+                          <div style={{
+                            width: `${pct}%`, height: '100%', borderRadius: 3,
+                            background: achieved ? '#4CAF50' : 'var(--brand-600)',
+                            transition: 'width 0.3s',
+                          }} />
+                        </div>
+                        {isEditing ? (
+                          <div style={{ display: 'flex', gap: 3, alignItems: 'center' }}>
+                            <input
+                              type="number" min="0"
+                              value={editingGoalValue}
+                              onChange={e => setEditingGoalValue(e.target.value)}
+                              onKeyDown={e => {
+                                if (e.key === 'Enter') handleGoalValueUpdate(goal.id, editingGoalValue)
+                                if (e.key === 'Escape') setEditingGoalId(null)
+                              }}
+                              autoFocus
+                              style={{ width: 60, padding: '2px 5px', border: '1px solid #6c63ff', borderRadius: 6, fontSize: 12, outline: 'none' }}
+                            />
+                            <button onClick={() => handleGoalValueUpdate(goal.id, editingGoalValue)}
+                              style={{ background: 'var(--brand-600)', color: '#fff', border: 'none', borderRadius: 6, padding: '2px 7px', cursor: 'pointer', fontSize: 11 }}>✓</button>
+                            <button onClick={() => setEditingGoalId(null)}
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: '#aaa' }}>✕</button>
+                          </div>
+                        ) : (
+                          <span style={{ fontSize: 12, color: '#888', whiteSpace: 'nowrap' }}>
+                            {goal.current_value} / {goal.target_value} {goal.unit}
                           </span>
                         )}
                       </div>
-                    </div>
-                    {task.due_date && (
-                      <div style={{ fontSize: 12, color: '#aaa', whiteSpace: 'nowrap' }}>
-                        {lt.clientDetail.tasks.due} {new Date(task.due_date).toLocaleDateString('lt-LT')}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              {/* Archyvuotos užduotys */}
-              {doneTasks.length > 0 && (
-                <div style={{ marginTop: '0.75rem' }}>
-                  <button
-                    onClick={() => setShowArchived(v => !v)}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: '#aaa', padding: '4px 0', display: 'flex', alignItems: 'center', gap: 6 }}
-                  >
-                    <span style={{ fontSize: 11 }}>{showArchived ? '▾' : '▸'}</span>
-                    Archyvuotos ({doneTasks.length})
-                  </button>
-                  {showArchived && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginTop: '0.5rem' }}>
-                      {doneTasks.map(task => (
-                        <div key={task.id} className="card" style={{ display: 'flex', alignItems: 'center', gap: 12, opacity: 0.55 }}>
-                          <div style={{
-                            width: 22, height: 22, borderRadius: '50%',
-                            border: '2px solid #4CAF50', background: '#EAF3DE',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontSize: 11, color: '#4CAF50', flexShrink: 0,
-                          }}>✓</div>
-                          <span style={{ fontSize: 14, color: '#666', textDecoration: 'line-through', flex: 1 }}>
-                            {task.title}
-                          </span>
-                          {task.due_date && (
-                            <span style={{ fontSize: 12, color: '#bbb', whiteSpace: 'nowrap' }}>
-                              {new Date(task.due_date).toLocaleDateString('lt-LT')}
-                            </span>
-                          )}
+                      {goal.deadline && (
+                        <div style={{ fontSize: 11, color: '#bbb' }}>
+                          {lt.clientDetail.goals.deadline} {new Date(goal.deadline).toLocaleDateString('lt-LT')}
                         </div>
-                      ))}
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* DEŠINĖ: Užduotys */}
+          <div id="uzduotys" className="card" style={{ padding: '1.25rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h2 style={{ fontSize: 15, fontWeight: 600 }}>{lt.clientDetail.sections.tasks}</h2>
+              <button className="btn-primary" style={{ fontSize: 12, padding: '5px 12px' }} onClick={() => setShowTaskForm(v => !v)}>
+                + Nauja užduotis
+              </button>
+            </div>
+            {showTaskForm && (
+              <form onSubmit={handleTaskCreate} style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', marginBottom: '1rem', padding: '0.75rem', background: '#f9f9f9', borderRadius: 10 }}>
+                <input
+                  value={newTask.title}
+                  onChange={e => setNewTask(p => ({ ...p, title: e.target.value }))}
+                  placeholder="Užduoties pavadinimas"
+                  required
+                  style={{ padding: '8px 10px', border: '1px solid #e5e5e5', borderRadius: 8, fontSize: 13, outline: 'none' }}
+                />
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                  <select
+                    value={newTask.priority}
+                    onChange={e => setNewTask(p => ({ ...p, priority: e.target.value }))}
+                    style={{ padding: '8px 10px', border: '1px solid #e5e5e5', borderRadius: 8, fontSize: 13 }}>
+                    <option value="low">{lt.clientDetail.tasks.priorities.low}</option>
+                    <option value="medium">{lt.clientDetail.tasks.priorities.medium}</option>
+                    <option value="high">{lt.clientDetail.tasks.priorities.high}</option>
+                  </select>
+                  <input
+                    type="date"
+                    value={newTask.due_date}
+                    onChange={e => setNewTask(p => ({ ...p, due_date: e.target.value }))}
+                    style={{ padding: '8px 10px', border: '1px solid #e5e5e5', borderRadius: 8, fontSize: 13 }}
+                  />
+                </div>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button type="submit" className="btn-primary" style={{ fontSize: 12, padding: '5px 12px' }}>{lt.common.save}</button>
+                  <button type="button" className="btn-secondary" style={{ fontSize: 12, padding: '5px 12px' }} onClick={() => setShowTaskForm(false)}>{lt.common.cancel}</button>
+                </div>
+              </form>
+            )}
+            {(() => {
+              const activeTasks = tasks.filter(t => t.status !== 'done')
+              const doneTasks = tasks.filter(t => t.status === 'done')
+
+              async function handleCompleteTask(taskId: string) {
+                await supabase.from('tasks').update({ status: 'done' }).eq('id', taskId)
+                setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: 'done' } : t))
+              }
+
+              if (tasks.length === 0) return (
+                <p style={{ fontSize: 13, color: '#aaa', fontStyle: 'italic' }}>{lt.clientDetail.tasks.noTasks}</p>
+              )
+
+              return (
+                <>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                    {activeTasks.map(task => (
+                      <div key={task.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 8, background: '#fafafa', border: '1px solid #f0f0f0' }}>
+                        <button
+                          onClick={() => handleCompleteTask(task.id)}
+                          title="Pažymėti kaip atlikta"
+                          style={{
+                            width: 20, height: 20, borderRadius: '50%',
+                            border: '2px solid #d0d0d0', background: '#fff',
+                            cursor: 'pointer', flexShrink: 0, display: 'flex',
+                            alignItems: 'center', justifyContent: 'center',
+                            fontSize: 10, color: 'transparent', transition: 'all 0.15s',
+                          }}
+                          onMouseEnter={e => { const b = e.currentTarget; b.style.borderColor = '#4CAF50'; b.style.background = '#EAF3DE'; b.style.color = '#4CAF50' }}
+                          onMouseLeave={e => { const b = e.currentTarget; b.style.borderColor = '#d0d0d0'; b.style.background = '#fff'; b.style.color = 'transparent' }}
+                        >✓</button>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 13, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#333' }}>
+                            {task.title}
+                          </div>
+                          <div style={{ display: 'flex', gap: 5, marginTop: 3, flexWrap: 'wrap', alignItems: 'center' }}>
+                            <button
+                              onClick={() => handleTaskStatusChange(task.id, task.status as TaskStatus)}
+                              style={{
+                                padding: '1px 7px', borderRadius: 10, fontSize: 11, fontWeight: 500,
+                                border: 'none', cursor: 'pointer',
+                                background: (taskStatusColors[task.status] || { bg: '#f0f0f0' }).bg,
+                                color: (taskStatusColors[task.status] || { color: '#666' }).color,
+                              }}
+                            >
+                              {lt.clientDetail.tasks.statuses[task.status as keyof typeof lt.clientDetail.tasks.statuses] || task.status} →
+                            </button>
+                            <Badge
+                              label={lt.clientDetail.tasks.priorities[task.priority as keyof typeof lt.clientDetail.tasks.priorities] || task.priority}
+                              style={priorityColors[task.priority] || { bg: '#f0f0f0', color: '#666' }}
+                            />
+                          </div>
+                        </div>
+                        {task.due_date && (
+                          <span style={{ fontSize: 11, color: '#bbb', whiteSpace: 'nowrap' }}>
+                            {new Date(task.due_date).toLocaleDateString('lt-LT')}
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  {doneTasks.length > 0 && (
+                    <div style={{ marginTop: '0.75rem' }}>
+                      <button
+                        onClick={() => setShowArchived(v => !v)}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: '#aaa', padding: '3px 0', display: 'flex', alignItems: 'center', gap: 5 }}
+                      >
+                        <span style={{ fontSize: 10 }}>{showArchived ? '▾' : '▸'}</span>
+                        Archyvuotos ({doneTasks.length})
+                      </button>
+                      {showArchived && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', marginTop: '0.4rem' }}>
+                          {doneTasks.map(task => (
+                            <div key={task.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 10px', borderRadius: 8, background: '#fafafa', border: '1px solid #f0f0f0', opacity: 0.55 }}>
+                              <div style={{
+                                width: 20, height: 20, borderRadius: '50%',
+                                border: '2px solid #4CAF50', background: '#EAF3DE',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                fontSize: 10, color: '#4CAF50', flexShrink: 0,
+                              }}>✓</div>
+                              <span style={{ fontSize: 13, color: '#666', textDecoration: 'line-through', flex: 1 }}>{task.title}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
-                </div>
-              )}
-            </>
-          )
-        })()}
+                </>
+              )
+            })()}
+          </div>
+
+        </div>{/* end grid tikslai+uzduotys */}
 
         {/* ── TURINYS ── */}
         <SectionHeader id="turinys" title={lt.clientDetail.sections.content} />
