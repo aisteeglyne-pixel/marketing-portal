@@ -184,7 +184,7 @@ export default function DashboardPage() {
                           {task.title}
                         </div>
                         <div style={{ fontSize: 11, color: '#aaa' }}>
-                          {clientMap[task.client_id] || '—'}
+                          {task.client_id ? (clientMap[task.client_id] || '—') : '—'}
                           {task.due_date && ` · ${new Date(task.due_date).toLocaleDateString('lt-LT')}`}
                         </div>
                       </div>
