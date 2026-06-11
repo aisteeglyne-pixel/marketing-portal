@@ -173,15 +173,16 @@ export default function ClientDetailPage() {
     setShowGoalForm(false)
   }
 
-  const TASK_STATUS_CYCLE: Record<string, string> = {
+  type TaskStatus = 'backlog' | 'in_progress' | 'review' | 'done'
+  const TASK_STATUS_CYCLE: Record<TaskStatus, TaskStatus> = {
     backlog: 'in_progress',
     in_progress: 'review',
     review: 'done',
     done: 'backlog',
   }
 
-  async function handleTaskStatusChange(taskId: string, currentStatus: string) {
-    const nextStatus = TASK_STATUS_CYCLE[currentStatus] || 'backlog'
+  async function handleTaskStatusChange(taskId: string, currentStatus: TaskStatus) {
+    const nextStatus: TaskStatus = TASK_STATUS_CYCLE[currentStatus]
     await supabase.from('tasks').update({ status: nextStatus }).eq('id', taskId)
     setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: nextStatus } : t))
   }
@@ -492,7 +493,7 @@ export default function ClientDetailPage() {
                   </div>
                   <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
                     <button
-                      onClick={() => handleTaskStatusChange(task.id, task.status)}
+                      onClick={() => handleTaskStatusChange(task.id, task.status as TaskStatus)}
                       style={{
                         padding: '2px 8px', borderRadius: 12, fontSize: 12, fontWeight: 500,
                         border: 'none', cursor: 'pointer',

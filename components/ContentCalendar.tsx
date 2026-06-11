@@ -121,8 +121,7 @@ export default function ContentCalendar({ posts, clientId, agencyId, role, onPos
     setShowNewPost(false)
   }
 
-  async function handleCreate(e: React.FormEvent) {
-    e.preventDefault()
+  async function handleCreate() {
     if (!agencyId) return
     setSubmitting(true)
     // Use first line of caption as title, fallback to platform + date
@@ -279,7 +278,7 @@ export default function ContentCalendar({ posts, clientId, agencyId, role, onPos
             </div>
 
             {/* Body: dviejų kolonų */}
-            <form onSubmit={handleCreate} style={{ display: 'flex', flex: 1, overflow: 'hidden', minHeight: 0 }}>
+            <form onSubmit={e => { e.preventDefault(); handleCreate() }} style={{ display: 'flex', flex: 1, overflow: 'hidden', minHeight: 0 }}>
 
               {/* Kairė: redagavimas */}
               <div style={{ flex: 1, padding: '1.25rem 1.5rem', overflowY: 'auto', borderRight: '1px solid #f0f0f0', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -389,7 +388,7 @@ export default function ContentCalendar({ posts, clientId, agencyId, role, onPos
                   <div style={{ padding: '10px 12px' }}>
                     {caption ? (
                       <p style={{ fontSize: 12, lineHeight: 1.5, margin: 0, color: '#333',
-                        display: '-webkit-box', WebkitLineClamp: 4, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                        overflow: 'hidden', maxHeight: '5.6em', lineHeight: '1.4em' }}>
                         {caption}
                       </p>
                     ) : (

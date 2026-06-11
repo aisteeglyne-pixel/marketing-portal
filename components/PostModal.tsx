@@ -105,7 +105,7 @@ export default function PostModal({ post, clientId, role, onClose, onUpdate }: P
     const { data: authData } = await supabase.auth.getUser()
     await supabase.from('comments').insert({
       content_post_id: post.id,
-      author_id: authData.user?.id,
+      author_id: authData.user?.id ?? null,
       text: commentText.trim(),
     })
     setCommentText('')
