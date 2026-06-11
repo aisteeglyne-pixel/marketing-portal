@@ -1,4 +1,4 @@
-export type UserRole = 'agency_admin' | 'client'
+export type UserRole = 'agency_admin' | 'agency_member' | 'client'
 
 export interface Agency {
   id: string
@@ -55,10 +55,25 @@ export interface Comment {
   author?: { full_name: string | null; email: string }
 }
 
+export interface Project {
+  id: string
+  agency_id: string
+  client_id: string | null
+  name: string
+  description: string | null
+  color: string
+  status: 'active' | 'archived'
+  due_date: string | null
+  created_by: string | null
+  created_at: string
+  client?: Pick<Client, 'id' | 'company_name'>
+}
+
 export interface Task {
   id: string
   agency_id: string
-  client_id: string
+  client_id: string | null
+  project_id: string | null
   title: string
   description: string | null
   status: 'backlog' | 'in_progress' | 'review' | 'done'
@@ -68,6 +83,9 @@ export interface Task {
   type: 'agency_task' | 'client_request'
   created_by: string
   created_at: string
+  project?: Pick<Project, 'id' | 'name' | 'color'>
+  client?: Pick<Client, 'id' | 'company_name'>
+  assignee?: Pick<Profile, 'id' | 'full_name' | 'email'>
 }
 
 export interface FileRecord {

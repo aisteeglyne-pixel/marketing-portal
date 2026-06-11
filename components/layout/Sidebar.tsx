@@ -29,8 +29,10 @@ export default function Sidebar({ role, agencyName, agencyLogo, agencyId }: Side
   const supabase = createClient()
   const [clients, setClients] = useState<Pick<Client, 'id' | 'company_name' | 'logo_url'>[]>([])
 
+  const isAgency = role === 'agency_admin' || role === 'agency_member'
+
   useEffect(() => {
-    if (role === 'agency_admin' && agencyId) {
+    if (isAgency && agencyId) {
       supabase
         .from('clients')
         .select('id, company_name, logo_url')
@@ -71,12 +73,18 @@ export default function Sidebar({ role, agencyName, agencyLogo, agencyId }: Side
 
       {/* Nav */}
       <nav style={{ flex: 1, padding: '0.75rem 0.5rem', display: 'flex', flexDirection: 'column', gap: 2, overflowY: 'auto' }}>
-        {role === 'agency_admin' ? (
+        {isAgency ? (
           <>
             {/* Apžvalga */}
             <Link href="/dashboard" className={`nav-item ${pathname === '/dashboard' ? 'active' : ''}`}>
               <span style={{ fontSize: 16 }}>⊞</span>
               <span>{lt.nav.dashboard}</span>
+            </Link>
+
+            {/* Komandos darbai */}
+            <Link href="/agency-tasks" className={`nav-item ${pathname.startsWith('/agency-tasks') ? 'active' : ''}`}>
+              <span style={{ fontSize: 16 }}>✓</span>
+              <span>{lt.nav.agencyTasks}</span>
             </Link>
 
             {/* Klientai sekcija */}
@@ -91,16 +99,18 @@ export default function Sidebar({ role, agencyName, agencyLogo, agencyId }: Side
                 }}>
                   {lt.nav.clients}
                 </span>
-                <button
-                  title={lt.clients.newClient}
-                  onClick={() => {/* TODO: 2 etapas */}}
-                  style={{
-                    background: 'none', border: 'none', color: '#bbb',
-                    cursor: 'pointer', fontSize: 18, lineHeight: 1,
-                    padding: '0 2px', borderRadius: 4,
-                  }}>
-                  +
-                </button>
+                {role === 'agency_admin' && (
+                  <button
+                    title={lt.clients.newClient}
+                    onClick={() => {/* TODO: 2 etapas */}}
+                    style={{
+                      background: 'none', border: 'none', color: '#bbb',
+                      cursor: 'pointer', fontSize: 18, lineHeight: 1,
+                      padding: '0 2px', borderRadius: 4,
+                    }}>
+                    +
+                  </button>
+                )}
               </div>
 
               {clients.length === 0 ? (
@@ -133,13 +143,15 @@ export default function Sidebar({ role, agencyName, agencyLogo, agencyId }: Side
               )}
             </div>
 
-            {/* Nustatymai */}
-            <div style={{ marginTop: 'auto', paddingTop: '0.5rem' }}>
-              <Link href="/settings" className={`nav-item ${pathname === '/settings' ? 'active' : ''}`}>
-                <span style={{ fontSize: 16 }}>⚙</span>
-                <span>{lt.nav.settings}</span>
-              </Link>
-            </div>
+            {/* Nustatymai – tik admin */}
+            {role === 'agency_admin' && (
+              <div style={{ marginTop: 'auto', paddingTop: '0.5rem' }}>
+                <Link href="/settings" className={`nav-item ${pathname === '/settings' ? 'active' : ''}`}>
+                  <span style={{ fontSize: 16 }}>⚙</span>
+                  <span>{lt.nav.settings}</span>
+                </Link>
+              </div>
+            )}
           </>
         ) : (
           clientNav.map(item => (

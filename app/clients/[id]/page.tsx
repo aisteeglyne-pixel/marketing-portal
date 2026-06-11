@@ -88,6 +88,7 @@ export default function ClientDetailPage() {
   const [editingGoalId, setEditingGoalId] = useState<string | null>(null)
   const [editingGoalValue, setEditingGoalValue] = useState('')
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null)
+  const [showArchived, setShowArchived] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -352,7 +353,7 @@ export default function ClientDetailPage() {
             {lt.clientDetail.goals.noGoals}
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '0.75rem' }}>
             {goals.map(goal => {
               const pct = goal.target_value > 0
                 ? Math.min(100, Math.round((goal.current_value / goal.target_value) * 100))
@@ -480,51 +481,125 @@ export default function ClientDetailPage() {
             </form>
           </div>
         )}
-        {tasks.length === 0 ? (
-          <div className="card" style={{ color: '#aaa', textAlign: 'center', padding: '2rem' }}>
-            {lt.clientDetail.tasks.noTasks}
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            {tasks.map(task => (
-              <div key={task.id} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontWeight: 500, marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {task.title}
-                  </div>
-                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+        {(() => {
+          const activeTasks = tasks.filter(t => t.status !== 'done')
+          const doneTasks = tasks.filter(t => t.status === 'done')
+
+          async function handleCompleteTask(taskId: string) {
+            await supabase.from('tasks').update({ status: 'done' }).eq('id', taskId)
+            setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: 'done' } : t))
+          }
+
+          if (tasks.length === 0) return (
+            <div className="card" style={{ color: '#aaa', textAlign: 'center', padding: '2rem' }}>
+              {lt.clientDetail.tasks.noTasks}
+            </div>
+          )
+
+          return (
+            <>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                {activeTasks.map(task => (
+                  <div key={task.id} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+                    {/* Tick mygtukas */}
                     <button
-                      onClick={() => handleTaskStatusChange(task.id, task.status as TaskStatus)}
+                      onClick={() => handleCompleteTask(task.id)}
+                      title="Pažymėti kaip atlikta"
                       style={{
-                        padding: '2px 8px', borderRadius: 12, fontSize: 12, fontWeight: 500,
-                        border: 'none', cursor: 'pointer',
-                        background: (taskStatusColors[task.status] || { bg: '#f0f0f0' }).bg,
-                        color: (taskStatusColors[task.status] || { color: '#666' }).color,
+                        width: 22, height: 22, borderRadius: '50%',
+                        border: '2px solid #d0d0d0', background: '#fff',
+                        cursor: 'pointer', flexShrink: 0, display: 'flex',
+                        alignItems: 'center', justifyContent: 'center',
+                        fontSize: 11, color: 'transparent',
+                        transition: 'all 0.15s',
                       }}
-                      title="Spustelėk norėdamas pakeisti statusą"
-                    >
-                      {lt.clientDetail.tasks.statuses[task.status as keyof typeof lt.clientDetail.tasks.statuses] || task.status} →
-                    </button>
-                    <Badge
-                      label={lt.clientDetail.tasks.priorities[task.priority as keyof typeof lt.clientDetail.tasks.priorities] || task.priority}
-                      style={priorityColors[task.priority] || { bg: '#f0f0f0', color: '#666' }}
-                    />
-                    {task.assigned_to && (
-                      <span style={{ fontSize: 12, color: '#666' }}>
-                        👤 {assignableUsers.find(u => u.id === task.assigned_to)?.label || '—'}
-                      </span>
+                      onMouseEnter={e => {
+                        const b = e.currentTarget
+                        b.style.borderColor = '#4CAF50'
+                        b.style.background = '#EAF3DE'
+                        b.style.color = '#4CAF50'
+                      }}
+                      onMouseLeave={e => {
+                        const b = e.currentTarget
+                        b.style.borderColor = '#d0d0d0'
+                        b.style.background = '#fff'
+                        b.style.color = 'transparent'
+                      }}
+                    >✓</button>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 500, marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {task.title}
+                      </div>
+                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+                        <button
+                          onClick={() => handleTaskStatusChange(task.id, task.status as TaskStatus)}
+                          style={{
+                            padding: '2px 8px', borderRadius: 12, fontSize: 12, fontWeight: 500,
+                            border: 'none', cursor: 'pointer',
+                            background: (taskStatusColors[task.status] || { bg: '#f0f0f0' }).bg,
+                            color: (taskStatusColors[task.status] || { color: '#666' }).color,
+                          }}
+                          title="Spustelėk norėdamas pakeisti statusą"
+                        >
+                          {lt.clientDetail.tasks.statuses[task.status as keyof typeof lt.clientDetail.tasks.statuses] || task.status} →
+                        </button>
+                        <Badge
+                          label={lt.clientDetail.tasks.priorities[task.priority as keyof typeof lt.clientDetail.tasks.priorities] || task.priority}
+                          style={priorityColors[task.priority] || { bg: '#f0f0f0', color: '#666' }}
+                        />
+                        {task.assigned_to && (
+                          <span style={{ fontSize: 12, color: '#666' }}>
+                            👤 {assignableUsers.find(u => u.id === task.assigned_to)?.label || '—'}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    {task.due_date && (
+                      <div style={{ fontSize: 12, color: '#aaa', whiteSpace: 'nowrap' }}>
+                        {lt.clientDetail.tasks.due} {new Date(task.due_date).toLocaleDateString('lt-LT')}
+                      </div>
                     )}
                   </div>
-                </div>
-                {task.due_date && (
-                  <div style={{ fontSize: 12, color: '#aaa', whiteSpace: 'nowrap' }}>
-                    {lt.clientDetail.tasks.due} {new Date(task.due_date).toLocaleDateString('lt-LT')}
-                  </div>
-                )}
+                ))}
               </div>
-            ))}
-          </div>
-        )}
+
+              {/* Archyvuotos užduotys */}
+              {doneTasks.length > 0 && (
+                <div style={{ marginTop: '0.75rem' }}>
+                  <button
+                    onClick={() => setShowArchived(v => !v)}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: '#aaa', padding: '4px 0', display: 'flex', alignItems: 'center', gap: 6 }}
+                  >
+                    <span style={{ fontSize: 11 }}>{showArchived ? '▾' : '▸'}</span>
+                    Archyvuotos ({doneTasks.length})
+                  </button>
+                  {showArchived && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginTop: '0.5rem' }}>
+                      {doneTasks.map(task => (
+                        <div key={task.id} className="card" style={{ display: 'flex', alignItems: 'center', gap: 12, opacity: 0.55 }}>
+                          <div style={{
+                            width: 22, height: 22, borderRadius: '50%',
+                            border: '2px solid #4CAF50', background: '#EAF3DE',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: 11, color: '#4CAF50', flexShrink: 0,
+                          }}>✓</div>
+                          <span style={{ fontSize: 14, color: '#666', textDecoration: 'line-through', flex: 1 }}>
+                            {task.title}
+                          </span>
+                          {task.due_date && (
+                            <span style={{ fontSize: 12, color: '#bbb', whiteSpace: 'nowrap' }}>
+                              {new Date(task.due_date).toLocaleDateString('lt-LT')}
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </>
+          )
+        })()}
 
         {/* ── TURINYS ── */}
         <SectionHeader id="turinys" title={lt.clientDetail.sections.content} />
