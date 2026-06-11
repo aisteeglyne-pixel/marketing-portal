@@ -167,7 +167,7 @@ export default function PortalPage() {
   const openClient = (client: Client) => { setActiveClient(client); setActiveView('client') }
 
   return (
-    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', width: '100%' }}>
       {/* ===== SIDEBAR ===== */}
       <aside id="sidebar">
         <div className="sidebar-logo">
