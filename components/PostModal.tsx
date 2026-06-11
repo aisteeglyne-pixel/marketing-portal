@@ -13,6 +13,23 @@ const STATUS_COLORS: Record<string, { bg: string; color: string }> = {
   published: { bg: '#EEF2FF', color: '#4338CA' },
 }
 
+const STATUS_LABELS: Record<string, string> = {
+  draft:     '📝 Juodraštis',
+  review:    '👁 Peržiūrai',
+  approved:  '✓ Patvirtinta',
+  rejected:  '✗ Atmesta',
+  published: '✓ Paskelbta',
+}
+
+const PLATFORM_COLORS: Record<string, string> = {
+  Instagram: '#E1306C',
+  Facebook:  '#1877F2',
+  LinkedIn:  '#0A66C2',
+  TikTok:    '#000000',
+  X:         '#14171A',
+  YouTube:   '#FF0000',
+}
+
 interface BufferProfile {
   id: string
   formatted_service_name: string
@@ -41,6 +58,7 @@ export default function PostModal({ post, clientId, role, onClose, onUpdate }: P
   const [commentText, setCommentText] = useState('')
   const [submittingComment, setSubmittingComment] = useState(false)
   const [actionLoading, setActionLoading] = useState<'approve' | 'reject' | null>(null)
+  const [currentStatus, setCurrentStatus] = useState(post.status)
 
   // Buffer
   const [bufferProfiles, setBufferProfiles] = useState<BufferProfile[]>([])
@@ -49,14 +67,10 @@ export default function PostModal({ post, clientId, role, onClose, onUpdate }: P
   const [scheduleDate, setScheduleDate] = useState('')
   const [scheduling, setScheduling] = useState(false)
   const [scheduleMsg, setScheduleMsg] = useState('')
-  const [currentStatus, setCurrentStatus] = useState(post.status)
 
   useEffect(() => {
     loadComments()
-    if (role === 'agency_admin' && post.status === 'approved') {
-      loadBufferProfiles()
-    }
-    // Default schedule date = post.publish_date or next hour
+    if (role === 'agency_admin' && post.status === 'approved') loadBufferProfiles()
     if (post.publish_date) {
       setScheduleDate(post.publish_date.slice(0, 16))
     } else {
@@ -88,10 +102,10 @@ export default function PostModal({ post, clientId, role, onClose, onUpdate }: P
   async function submitComment() {
     if (!commentText.trim()) return
     setSubmittingComment(true)
-    const { data: { user } } = await supabase.auth.getUser() as any
+    const { data: authData } = await supabase.auth.getUser()
     await supabase.from('comments').insert({
       content_post_id: post.id,
-      author_id: user?.id,
+      author_id: authData.user?.id,
       text: commentText.trim(),
     })
     setCommentText('')
@@ -139,162 +153,252 @@ export default function PostModal({ post, clientId, role, onClose, onUpdate }: P
   }
 
   const statusStyle = STATUS_COLORS[currentStatus] || STATUS_COLORS.draft
+  const platformColor = PLATFORM_COLORS[post.platform] || '#999'
+  const isVideo = post.media_url?.match(/\.(mp4|mov|webm)$/i)
 
   return (
-    <div
-      onClick={onClose}
-      style={{
-        position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)',
-        zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: '1rem',
+    <div onClick={onClose} style={{
+      position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)',
+      zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center',
+      padding: '1rem',
+    }}>
+      <div onClick={e => e.stopPropagation()} style={{
+        background: '#fff', borderRadius: 16, width: '100%', maxWidth: 900,
+        maxHeight: '92vh', overflow: 'hidden', display: 'flex', flexDirection: 'column',
+        boxShadow: '0 24px 80px rgba(0,0,0,0.2)',
       }}>
-      <div
-        onClick={e => e.stopPropagation()}
-        style={{
-          background: '#fff', borderRadius: 16, width: '100%', maxWidth: 560,
-          maxHeight: '90vh', overflowY: 'auto',
-          boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
-        }}>
 
         {/* Header */}
-        <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <div style={{ flex: 1, minWidth: 0, marginRight: 12 }}>
-            <h2 style={{ fontSize: 17, fontWeight: 600, marginBottom: 6 }}>{post.title}</h2>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-              <span style={{ ...statusStyle, padding: '2px 10px', borderRadius: 12, fontSize: 12, fontWeight: 500 }}>
-                {lt.calendar.statuses[currentStatus as keyof typeof lt.calendar.statuses] || currentStatus}
-              </span>
-              <span style={{ fontSize: 13, color: '#888' }}>{lt.postModal.platform} {post.platform}</span>
-              <span style={{ fontSize: 13, color: '#888' }}>
-                {post.publish_date
-                  ? new Date(post.publish_date).toLocaleDateString('lt-LT')
-                  : lt.postModal.noDate}
-              </span>
+        <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
+            {/* Platform badge */}
+            <div style={{
+              width: 30, height: 30, borderRadius: 8, background: platformColor,
+              color: '#fff', fontSize: 10, fontWeight: 700,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+            }}>
+              {post.platform.slice(0, 2).toUpperCase()}
+            </div>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 15, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {post.title}
+              </div>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 2 }}>
+                <span style={{
+                  ...statusStyle, padding: '1px 8px', borderRadius: 10,
+                  fontSize: 11, fontWeight: 500,
+                }}>
+                  {STATUS_LABELS[currentStatus] || currentStatus}
+                </span>
+                <span style={{ fontSize: 11, color: '#aaa' }}>
+                  {post.publish_date
+                    ? new Date(post.publish_date).toLocaleDateString('lt-LT', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+                    : 'Data nenustatyta'}
+                </span>
+              </div>
             </div>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: '#aaa', padding: 4, flexShrink: 0 }}>
-            {lt.postModal.close}
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: '#bbb', padding: '4px 8px', flexShrink: 0, lineHeight: 1 }}>
+            ✕
           </button>
         </div>
 
-        {/* Vizualas */}
-        {post.media_url && (
-          <div style={{ borderBottom: '1px solid #f0f0f0' }}>
-            {post.media_url.match(/\.(mp4|mov|webm)$/i) ? (
-              <video src={post.media_url} controls style={{ width: '100%', maxHeight: 300, display: 'block' }} />
+        {/* Body: dviejų kolonų */}
+        <div style={{ display: 'flex', flex: 1, overflow: 'hidden', minHeight: 0 }}>
+
+          {/* Kairė: media + caption */}
+          <div style={{ flex: '0 0 55%', borderRight: '1px solid #f0f0f0', overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+            {post.media_url ? (
+              isVideo ? (
+                <video src={post.media_url} controls style={{ width: '100%', maxHeight: 360, display: 'block', background: '#000' }} />
+              ) : (
+                <img src={post.media_url} alt="vizualas" style={{ width: '100%', maxHeight: 360, objectFit: 'cover', display: 'block' }} />
+              )
             ) : (
-              <img src={post.media_url} alt="vizualas" style={{ width: '100%', maxHeight: 300, objectFit: 'cover', display: 'block' }} />
+              <div style={{
+                height: 200, background: '#f8f8f8', display: 'flex', alignItems: 'center',
+                justifyContent: 'center', color: '#ddd', fontSize: 40, flexShrink: 0,
+              }}>
+                🖼
+              </div>
             )}
-          </div>
-        )}
 
-        {/* Caption */}
-        <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid #f0f0f0' }}>
-          <div style={{ fontSize: 12, fontWeight: 600, color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>
-            {lt.postModal.caption}
-          </div>
-          <p style={{ fontSize: 14, color: post.caption ? '#333' : '#ccc', lineHeight: 1.6, margin: 0, fontStyle: post.caption ? 'normal' : 'italic' }}>
-            {post.caption || lt.postModal.noCaption}
-          </p>
-        </div>
-
-        {/* Patvirtinimo mygtukai (klientui) */}
-        {role === 'client' && currentStatus === 'review' && (
-          <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid #f0f0f0', display: 'flex', gap: 8 }}>
-            <button
-              onClick={() => handleStatusChange('approved')}
-              disabled={actionLoading !== null}
-              style={{ flex: 1, padding: '10px', borderRadius: 8, border: 'none', background: '#EAF3DE', color: '#27500A', fontWeight: 600, fontSize: 14, cursor: 'pointer' }}>
-              {actionLoading === 'approve' ? '...' : lt.postModal.approveBtn}
-            </button>
-            <button
-              onClick={() => handleStatusChange('rejected')}
-              disabled={actionLoading !== null}
-              style={{ flex: 1, padding: '10px', borderRadius: 8, border: 'none', background: '#FCEBEB', color: '#791F1F', fontWeight: 600, fontSize: 14, cursor: 'pointer' }}>
-              {actionLoading === 'reject' ? '...' : lt.postModal.rejectBtn}
-            </button>
-          </div>
-        )}
-
-        {/* Buffer planavimas (agentūrai, kai approved) */}
-        {role === 'agency_admin' && currentStatus === 'approved' && (
-          <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid #f0f0f0', background: '#fafafa' }}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 12 }}>
-              {lt.postModal.scheduleSection}
+            {/* Caption */}
+            <div style={{ padding: '1.25rem 1.5rem', flex: 1 }}>
+              <div style={{ fontSize: 11, fontWeight: 600, color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>
+                Tekstas
+              </div>
+              <p style={{
+                fontSize: 14, color: post.caption ? '#333' : '#ccc', lineHeight: 1.7,
+                margin: 0, fontStyle: post.caption ? 'normal' : 'italic',
+                whiteSpace: 'pre-wrap',
+              }}>
+                {post.caption || 'Nėra teksto'}
+              </p>
             </div>
-            {loadingProfiles ? (
-              <div style={{ fontSize: 13, color: '#aaa' }}>{lt.postModal.loadingProfiles}</div>
-            ) : bufferProfiles.length === 0 ? (
-              <div style={{ fontSize: 13, color: '#e07b39' }}>{lt.postModal.noBufferToken}</div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <select
-                  value={selectedProfile}
-                  onChange={e => setSelectedProfile(e.target.value)}
-                  style={{ padding: '8px 12px', border: '1px solid #e5e5e5', borderRadius: 8, fontSize: 14, background: '#fff' }}>
-                  {bufferProfiles.map(p => (
-                    <option key={p.id} value={p.id}>{p.formatted_service_name} — {p.formatted_username}</option>
-                  ))}
-                </select>
-                <input
-                  type="datetime-local"
-                  value={scheduleDate}
-                  onChange={e => setScheduleDate(e.target.value)}
-                  style={{ padding: '8px 12px', border: '1px solid #e5e5e5', borderRadius: 8, fontSize: 14 }}
-                />
-                <button
-                  onClick={handleSchedule}
-                  disabled={scheduling || !selectedProfile}
-                  style={{ padding: '10px', borderRadius: 8, border: 'none', background: 'var(--brand-600)', color: '#fff', fontWeight: 600, fontSize: 14, cursor: 'pointer' }}>
-                  {scheduling ? lt.postModal.scheduling : lt.postModal.scheduleBtn}
-                </button>
-                {scheduleMsg && (
-                  <div style={{ fontSize: 13, color: scheduleMsg === lt.postModal.scheduleSuccess ? '#27500A' : '#791F1F', padding: '8px 12px', borderRadius: 8, background: scheduleMsg === lt.postModal.scheduleSuccess ? '#EAF3DE' : '#FCEBEB' }}>
-                    {scheduleMsg}
+          </div>
+
+          {/* Dešinė: veiksmai + komentarai */}
+          <div style={{ flex: '0 0 45%', overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+
+            {/* Kliento patvirtinimas */}
+            {role === 'client' && currentStatus === 'review' && (
+              <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid #f0f0f0' }}>
+                <div style={{ fontSize: 11, fontWeight: 600, color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 10 }}>
+                  Tavo sprendimas
+                </div>
+                <p style={{ fontSize: 13, color: '#666', marginBottom: 12, lineHeight: 1.5 }}>
+                  Agentūra laukia tavo patvirtinimo šiam įrašui.
+                </p>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button
+                    onClick={() => handleStatusChange('approved')}
+                    disabled={actionLoading !== null}
+                    style={{
+                      flex: 1, padding: '10px', borderRadius: 8, border: 'none',
+                      background: actionLoading === 'approve' ? '#d4edda' : '#EAF3DE',
+                      color: '#27500A', fontWeight: 600, fontSize: 14, cursor: 'pointer',
+                    }}>
+                    {actionLoading === 'approve' ? '...' : '✓ Patvirtinti'}
+                  </button>
+                  <button
+                    onClick={() => handleStatusChange('rejected')}
+                    disabled={actionLoading !== null}
+                    style={{
+                      flex: 1, padding: '10px', borderRadius: 8, border: 'none',
+                      background: actionLoading === 'reject' ? '#fcd9d9' : '#FCEBEB',
+                      color: '#791F1F', fontWeight: 600, fontSize: 14, cursor: 'pointer',
+                    }}>
+                    {actionLoading === 'reject' ? '...' : '✗ Atmesti'}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Patvirtinta/atmesta banner */}
+            {currentStatus === 'approved' && role === 'client' && (
+              <div style={{ padding: '1rem 1.5rem', background: '#EAF3DE', borderBottom: '1px solid #d4edda' }}>
+                <div style={{ fontSize: 14, color: '#27500A', fontWeight: 600 }}>✓ Patvirtinta</div>
+                <div style={{ fontSize: 12, color: '#4a7c32', marginTop: 2 }}>Agentūra gali planuoti šį įrašą</div>
+              </div>
+            )}
+            {currentStatus === 'rejected' && (
+              <div style={{ padding: '1rem 1.5rem', background: '#FCEBEB', borderBottom: '1px solid #fcd4d4' }}>
+                <div style={{ fontSize: 14, color: '#791F1F', fontWeight: 600 }}>✗ Atmesta</div>
+                <div style={{ fontSize: 12, color: '#a33030', marginTop: 2 }}>Palikite komentarą su pastabomis</div>
+              </div>
+            )}
+
+            {/* Buffer planavimas */}
+            {role === 'agency_admin' && currentStatus === 'approved' && (
+              <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid #f0f0f0', background: '#fafcff' }}>
+                <div style={{ fontSize: 11, fontWeight: 600, color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 12 }}>
+                  📅 Suplanuoti per Buffer
+                </div>
+                {loadingProfiles ? (
+                  <div style={{ fontSize: 13, color: '#aaa' }}>Kraunami profiliai...</div>
+                ) : bufferProfiles.length === 0 ? (
+                  <div style={{ fontSize: 13, color: '#e07b39', background: '#FEF3C7', padding: '10px 12px', borderRadius: 8 }}>
+                    Buffer API raktas neprijungtas šiam klientui
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <select value={selectedProfile} onChange={e => setSelectedProfile(e.target.value)}
+                      style={{ padding: '8px 10px', border: '1px solid #e5e5e5', borderRadius: 8, fontSize: 13, background: '#fff' }}>
+                      {bufferProfiles.map(p => (
+                        <option key={p.id} value={p.id}>{p.formatted_service_name} — {p.formatted_username}</option>
+                      ))}
+                    </select>
+                    <input type="datetime-local" value={scheduleDate} onChange={e => setScheduleDate(e.target.value)}
+                      style={{ padding: '8px 10px', border: '1px solid #e5e5e5', borderRadius: 8, fontSize: 13 }} />
+                    <button onClick={handleSchedule} disabled={scheduling || !selectedProfile}
+                      style={{ padding: '9px', borderRadius: 8, border: 'none', background: 'var(--brand-600)', color: '#fff', fontWeight: 600, fontSize: 13, cursor: 'pointer' }}>
+                      {scheduling ? '⏳ Planuojama...' : '📤 Suplanuoti'}
+                    </button>
+                    {scheduleMsg && (
+                      <div style={{
+                        fontSize: 13, padding: '8px 12px', borderRadius: 8,
+                        color: scheduleMsg === lt.postModal.scheduleSuccess ? '#27500A' : '#791F1F',
+                        background: scheduleMsg === lt.postModal.scheduleSuccess ? '#EAF3DE' : '#FCEBEB',
+                      }}>
+                        {scheduleMsg}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
             )}
-          </div>
-        )}
 
-        {/* Komentarai */}
-        <div style={{ padding: '1.25rem 1.5rem' }}>
-          <div style={{ fontSize: 12, fontWeight: 600, color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 12 }}>
-            {lt.postModal.comments}
-          </div>
-          {comments.length === 0 ? (
-            <p style={{ fontSize: 13, color: '#ccc', fontStyle: 'italic', marginBottom: 12 }}>{lt.postModal.noComments}</p>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 12 }}>
-              {comments.map(c => (
-                <div key={c.id} style={{ fontSize: 13, lineHeight: 1.5 }}>
-                  <span style={{ fontWeight: 600, color: '#555', marginRight: 6 }}>
-                    {(c.author as any)?.full_name || (c.author as any)?.email || 'Nežinomas'}
-                  </span>
-                  <span style={{ color: '#888', fontSize: 11, marginRight: 8 }}>
-                    {new Date(c.created_at).toLocaleDateString('lt-LT')}
-                  </span>
-                  <div style={{ color: '#333', marginTop: 2 }}>{c.text}</div>
+            {/* Agentūra gali keisti statusą iš review */}
+            {role === 'agency_admin' && currentStatus === 'review' && (
+              <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid #f0f0f0' }}>
+                <div style={{ fontSize: 11, fontWeight: 600, color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 10 }}>
+                  Statusas
                 </div>
-              ))}
+                <div style={{ fontSize: 13, color: '#666', marginBottom: 10 }}>Laukiama kliento patvirtinimo</div>
+                <button
+                  onClick={() => handleStatusChange('approved')}
+                  disabled={actionLoading !== null}
+                  style={{ width: '100%', padding: '9px', borderRadius: 8, border: 'none', background: '#EAF3DE', color: '#27500A', fontWeight: 600, fontSize: 13, cursor: 'pointer' }}>
+                  {actionLoading === 'approve' ? '...' : '✓ Patvirtinti agentūros vardu'}
+                </button>
+              </div>
+            )}
+
+            {/* Komentarai */}
+            <div style={{ padding: '1.25rem 1.5rem', flex: 1, display: 'flex', flexDirection: 'column' }}>
+              <div style={{ fontSize: 11, fontWeight: 600, color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 12 }}>
+                Komentarai {comments.length > 0 && `(${comments.length})`}
+              </div>
+
+              <div style={{ flex: 1, overflowY: 'auto', marginBottom: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {comments.length === 0 ? (
+                  <p style={{ fontSize: 13, color: '#ccc', fontStyle: 'italic', margin: 0 }}>Komentarų dar nėra</p>
+                ) : (
+                  comments.map(c => (
+                    <div key={c.id} style={{ display: 'flex', gap: 8 }}>
+                      <div style={{
+                        width: 28, height: 28, borderRadius: '50%', background: '#EEF2FF',
+                        color: '#4338CA', fontSize: 11, fontWeight: 700,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                      }}>
+                        {((c.author as any)?.full_name || (c.author as any)?.email || '?')[0].toUpperCase()}
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', gap: 6, alignItems: 'baseline', marginBottom: 2 }}>
+                          <span style={{ fontSize: 12, fontWeight: 600, color: '#444' }}>
+                            {(c.author as any)?.full_name || (c.author as any)?.email || 'Nežinomas'}
+                          </span>
+                          <span style={{ fontSize: 11, color: '#bbb' }}>
+                            {new Date(c.created_at).toLocaleDateString('lt-LT')}
+                          </span>
+                        </div>
+                        <div style={{ fontSize: 13, color: '#333', lineHeight: 1.5, background: '#f8f8f8', padding: '6px 10px', borderRadius: 8 }}>
+                          {c.text}
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input
+                  type="text"
+                  value={commentText}
+                  onChange={e => setCommentText(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && !e.shiftKey && submitComment()}
+                  placeholder="Rašyti komentarą..."
+                  style={{ flex: 1, padding: '8px 12px', border: '1px solid #e5e5e5', borderRadius: 8, fontSize: 13, outline: 'none' }}
+                />
+                <button
+                  onClick={submitComment}
+                  disabled={submittingComment || !commentText.trim()}
+                  style={{ padding: '8px 14px', borderRadius: 8, border: 'none', background: 'var(--brand-600)', color: '#fff', fontSize: 13, cursor: 'pointer' }}>
+                  ↑
+                </button>
+              </div>
             </div>
-          )}
-          <div style={{ display: 'flex', gap: 8 }}>
-            <input
-              type="text"
-              value={commentText}
-              onChange={e => setCommentText(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && submitComment()}
-              placeholder={lt.postModal.commentPlaceholder}
-              style={{ flex: 1, padding: '8px 12px', border: '1px solid #e5e5e5', borderRadius: 8, fontSize: 13, outline: 'none' }}
-            />
-            <button
-              onClick={submitComment}
-              disabled={submittingComment || !commentText.trim()}
-              style={{ padding: '8px 14px', borderRadius: 8, border: 'none', background: 'var(--brand-600)', color: '#fff', fontSize: 13, cursor: 'pointer' }}>
-              {lt.postModal.sendComment}
-            </button>
           </div>
         </div>
       </div>

@@ -85,6 +85,8 @@ export default function ClientDetailPage() {
   const [newTask, setNewTask] = useState({ title: '', description: '', priority: 'medium', due_date: '', assigned_to: '' })
   const [showGoalForm, setShowGoalForm] = useState(false)
   const [newGoal, setNewGoal] = useState({ title: '', target_value: '', current_value: '0', unit: '', deadline: '' })
+  const [editingGoalId, setEditingGoalId] = useState<string | null>(null)
+  const [editingGoalValue, setEditingGoalValue] = useState('')
 
   useEffect(() => {
     async function load() {
@@ -169,6 +171,27 @@ export default function ClientDetailPage() {
     if (data) setGoals(prev => [data, ...prev])
     setNewGoal({ title: '', target_value: '', current_value: '0', unit: '', deadline: '' })
     setShowGoalForm(false)
+  }
+
+  const TASK_STATUS_CYCLE: Record<string, string> = {
+    backlog: 'in_progress',
+    in_progress: 'review',
+    review: 'done',
+    done: 'backlog',
+  }
+
+  async function handleTaskStatusChange(taskId: string, currentStatus: string) {
+    const nextStatus = TASK_STATUS_CYCLE[currentStatus] || 'backlog'
+    await supabase.from('tasks').update({ status: nextStatus }).eq('id', taskId)
+    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: nextStatus } : t))
+  }
+
+  async function handleGoalValueUpdate(goalId: string, newValue: string) {
+    const num = Number(newValue)
+    if (isNaN(num)) return
+    await supabase.from('goals').update({ current_value: num }).eq('id', goalId)
+    setGoals(prev => prev.map(g => g.id === goalId ? { ...g, current_value: num } : g))
+    setEditingGoalId(null)
   }
 
   async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -333,11 +356,23 @@ export default function ClientDetailPage() {
                 ? Math.min(100, Math.round((goal.current_value / goal.target_value) * 100))
                 : 0
               const achieved = goal.current_value >= goal.target_value
+              const isEditing = editingGoalId === goal.id
               return (
                 <div key={goal.id} className="card">
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
                     <span style={{ fontWeight: 500 }}>{goal.title}</span>
-                    {achieved && <Badge label={lt.clientDetail.goals.achieved} style={{ bg: '#EAF3DE', color: '#27500A' }} />}
+                    <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                      {achieved && <Badge label={lt.clientDetail.goals.achieved} style={{ bg: '#EAF3DE', color: '#27500A' }} />}
+                      {!isEditing && (
+                        <button
+                          onClick={() => { setEditingGoalId(goal.id); setEditingGoalValue(String(goal.current_value)) }}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: '#aaa', padding: '2px 6px' }}
+                          title="Atnaujinti progresą"
+                        >
+                          ✏️
+                        </button>
+                      )}
+                    </div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
                     <div style={{ flex: 1, height: 8, background: '#f0f0f0', borderRadius: 4, overflow: 'hidden' }}>
@@ -347,9 +382,34 @@ export default function ClientDetailPage() {
                         transition: 'width 0.3s',
                       }} />
                     </div>
-                    <span style={{ fontSize: 13, color: '#666', whiteSpace: 'nowrap' }}>
-                      {goal.current_value} / {goal.target_value} {goal.unit}
-                    </span>
+                    {isEditing ? (
+                      <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                        <input
+                          type="number" min="0"
+                          value={editingGoalValue}
+                          onChange={e => setEditingGoalValue(e.target.value)}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') handleGoalValueUpdate(goal.id, editingGoalValue)
+                            if (e.key === 'Escape') setEditingGoalId(null)
+                          }}
+                          autoFocus
+                          style={{ width: 70, padding: '3px 6px', border: '1px solid #6c63ff', borderRadius: 6, fontSize: 13, outline: 'none' }}
+                        />
+                        <span style={{ fontSize: 12, color: '#aaa' }}>/ {goal.target_value} {goal.unit}</span>
+                        <button onClick={() => handleGoalValueUpdate(goal.id, editingGoalValue)}
+                          style={{ background: 'var(--brand-600)', color: '#fff', border: 'none', borderRadius: 6, padding: '3px 8px', cursor: 'pointer', fontSize: 12 }}>
+                          ✓
+                        </button>
+                        <button onClick={() => setEditingGoalId(null)}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: '#aaa' }}>
+                          ✕
+                        </button>
+                      </div>
+                    ) : (
+                      <span style={{ fontSize: 13, color: '#666', whiteSpace: 'nowrap' }}>
+                        {goal.current_value} / {goal.target_value} {goal.unit}
+                      </span>
+                    )}
                   </div>
                   {goal.deadline && (
                     <div style={{ fontSize: 12, color: '#aaa' }}>
@@ -431,12 +491,20 @@ export default function ClientDetailPage() {
                     {task.title}
                   </div>
                   <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+                    <button
+                      onClick={() => handleTaskStatusChange(task.id, task.status)}
+                      style={{
+                        padding: '2px 8px', borderRadius: 12, fontSize: 12, fontWeight: 500,
+                        border: 'none', cursor: 'pointer',
+                        background: (taskStatusColors[task.status] || { bg: '#f0f0f0' }).bg,
+                        color: (taskStatusColors[task.status] || { color: '#666' }).color,
+                      }}
+                      title="Spustelėk norėdamas pakeisti statusą"
+                    >
+                      {lt.clientDetail.tasks.statuses[task.status as keyof typeof lt.clientDetail.tasks.statuses] || task.status} →
+                    </button>
                     <Badge
-                      label={lt.clientDetail.tasks.statuses[task.status]}
-                      style={taskStatusColors[task.status] || { bg: '#f0f0f0', color: '#666' }}
-                    />
-                    <Badge
-                      label={lt.clientDetail.tasks.priorities[task.priority]}
+                      label={lt.clientDetail.tasks.priorities[task.priority as keyof typeof lt.clientDetail.tasks.priorities] || task.priority}
                       style={priorityColors[task.priority] || { bg: '#f0f0f0', color: '#666' }}
                     />
                     {task.assigned_to && (
