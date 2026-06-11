@@ -3,9 +3,8 @@ import { Sora } from 'next/font/google'
 import './globals.css'
 
 const sora = Sora({
-  subsets: ['latin'],
+  subsets: ['latin', 'latin-ext'],
   weight: ['400', '500', '600', '700', '800'],
-  variable: '--font-sora',
   display: 'swap',
 })
 
@@ -16,8 +15,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="lt" className={sora.variable}>
-      <body>{children}</body>
+    <html lang="lt">
+      <body className={sora.className} style={{ margin: 0, padding: 0 }}>{children}</body>
     </html>
   )
 }

@@ -39,7 +39,7 @@
   h1, h2, h3, h4, h5, h6,
   .topbar-title, .stat-value, .welcome-banner h2,
   .cal-month, .modal-title, .client-workspace-title,
-  .section-title { font-family: 'Sora', 'Sora', sans-serif; }
+  .section-title { font-family: 'Sora', sans-serif; }
 
   body { font-family: 'Sora', system-ui, sans-serif; background:var(--bg); color:var(--text); display:flex; height:100vh; overflow:hidden; }
 
@@ -812,34 +812,31 @@
     background: var(--primary-dark);
   }
 
-  /* Stat icon pink tint */
-  .stat-card .stat-icon {
-    background: var(--primary-light) !important;
-  }
-  
-  /* Welcome banner text refinement */
+  /* Stat icons — each card keeps its own background (set via inline style) */
+
+  /* Welcome banner */
   .welcome-banner h2 {
     font-size: 22px;
     font-weight: 800;
-    letter-spacing: -0.3px;
+    letter-spacing: -0.5px;
   }
-  
-  /* Section titles use NeuethingSans */
-  .section-title > span:first-child, 
+
+  /* Section titles */
+  .section-title > span:first-child,
   .page-title {
-    font-family: 'Sora', 'Sora', sans-serif;
+    font-family: 'Sora', sans-serif;
     letter-spacing: -0.2px;
   }
 
-  /* Topbar title bold */
+  /* Topbar title */
   .topbar-title {
     font-weight: 800;
     letter-spacing: -0.3px;
   }
 
-  /* Sidebar nav section title color */
+  /* Sidebar nav section title */
   .nav-section-title {
-    color: rgba(242,200,234,0.35) !important;
+    color: rgba(199,210,254,0.35);
   }
 
   /* Toggle track active */
