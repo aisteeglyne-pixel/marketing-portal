@@ -211,9 +211,9 @@ export default function ContentPage() {
                   {/* Title */}
                   <div>
                     <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 2 }}>{post.title || '(Be pavadinimo)'}</div>
-                    {post.body && (
+                    {post.caption && (
                       <div style={{ fontSize: 11, color: '#aaa', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 280 }}>
-                        {post.body}
+                        {post.caption}
                       </div>
                     )}
                   </div>
