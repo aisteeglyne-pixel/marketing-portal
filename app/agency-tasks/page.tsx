@@ -940,7 +940,7 @@ export default function AgencyTasksPage() {
                 <GroupSection
                   key={g.key}
                   label={g.label}
-                  color={g.color}
+                  color={'color' in g ? g.color : undefined}
                   tasks={g.tasks}
                   onTaskClick={t => setModal({ type: 'task', task: t })}
                   onAddTask={() => {
