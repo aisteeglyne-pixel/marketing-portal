@@ -388,7 +388,7 @@ export default function ContentCalendar({ posts, clientId, agencyId, role, onPos
                   <div style={{ padding: '10px 12px' }}>
                     {caption ? (
                       <p style={{ fontSize: 12, lineHeight: 1.5, margin: 0, color: '#333',
-                        overflow: 'hidden', maxHeight: '5.6em', lineHeight: '1.4em' }}>
+                        overflow: 'hidden', maxHeight: '6em' }}>
                         {caption}
                       </p>
                     ) : (
