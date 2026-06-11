@@ -150,7 +150,7 @@ export default function DashboardPage() {
                           {post.title}
                         </div>
                         <div style={{ fontSize: 11, color: '#aaa' }}>
-                          {clientMap[post.client_id] || '—'} · {post.platform}
+                          {post.client_id ? (clientMap[post.client_id] || '—') : '—'} · {post.platform}
                         </div>
                       </div>
                       <span style={{ fontSize: 11, color: '#D97706', fontWeight: 500 }}>Peržiūrėti →</span>
