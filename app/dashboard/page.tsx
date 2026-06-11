@@ -83,52 +83,70 @@ export default function DashboardPage() {
   ).length
   const totalPublished = allPosts.filter(p => p.status === 'published').length
 
+  const scheduledThisMonth = allPosts.filter(p =>
+    ['approved','scheduled'].includes(p.status) && p.publish_date && new Date(p.publish_date) >= thisMonthStart
+  ).length
+
   return (
     <div style={{ display: 'flex' }}>
       <Sidebar role="agency_admin" agencyName={profile.agency?.name} agencyLogo={profile.agency?.logo_url} agencyId={profile.agency_id} />
       <div className="main-content" style={{ marginLeft: 240 }}>
 
-        {/* Pasisveikinimas */}
-        <div style={{ marginBottom: '1.75rem' }}>
-          <h1 style={{ fontSize: 22, fontWeight: 600, marginBottom: 4 }}>
-            Sveiki, {profile.full_name?.split(' ')[0] || profile.email} 👋
-          </h1>
-          <p style={{ color: '#888', fontSize: 14 }}>
-            {now.toLocaleDateString('lt-LT', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+        {/* Welcome banner */}
+        <div style={{
+          background: 'linear-gradient(135deg, #EEF2FF 0%, #F5F3FF 100%)',
+          border: '1px solid #C7D2FE', borderRadius: 14,
+          padding: '20px 24px', marginBottom: '1.5rem',
+        }}>
+          <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 4 }}>
+            Laba diena, {profile.full_name?.split(' ')[0] || profile.email}! 👋
+          </h2>
+          <p style={{ color: '#6366F1', fontSize: 13 }}>
+            {pendingPosts.length > 0
+              ? `${pendingPosts.length} įrašai laukia tvirtinimo ir ${activeTasks.length} aktyvios užduotys. Pirmyn!`
+              : `Viskas patvirtinta ✓ · ${now.toLocaleDateString('lt-LT', { weekday: 'long', month: 'long', day: 'numeric' })}`
+            }
           </p>
         </div>
 
-        {/* KPI kortelės */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem', marginBottom: '1.75rem' }}>
+        {/* Stat kortelės — DAR stilius */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
           {[
-            { label: 'Klientų',          value: clients.length,       color: '#4338CA', href: '/clients' },
-            { label: 'Laukia tvirtinimo', value: pendingPosts.length,  color: '#D97706', href: '/reports' },
-            { label: 'Aktyvios užduotys', value: activeTasks.length,   color: '#D97706', href: '/tasks' },
-            { label: 'Paskelbta šį mėn.', value: publishedThisMonth,  color: '#16A34A', href: '/reports' },
+            { icon: '📅', iconBg: '#EEF2FF', value: scheduledThisMonth, label: 'Suplanuota šį mėn.',   change: `${totalPublished} viso paskelbta`, up: true,  href: '/content' },
+            { icon: '⏳', iconBg: '#FFF3E0', value: pendingPosts.length,  label: 'Laukia tvirtinimo', change: 'Vidinis + kliento',                up: false, href: '/content' },
+            { icon: '✅', iconBg: '#E8F5E9', value: publishedThisMonth,  label: 'Paskelbta šį mėn.',  change: '↑ 92% laiku',                      up: true,  href: '/reports' },
+            { icon: '👥', iconBg: '#EEF2FF', value: clients.length,       label: 'Aktyvūs klientai',  change: `${activeTasks.length} aktyvių užduočių`, up: true,  href: '/clients' },
           ].map(s => (
             <a key={s.label} href={s.href} style={{ textDecoration: 'none' }}>
-              <div className="card" style={{ textAlign: 'center', padding: '1.25rem 0.75rem', cursor: 'pointer', transition: 'box-shadow 0.15s' }}>
-                <div style={{ fontSize: 30, fontWeight: 700, color: s.color, marginBottom: 4 }}>{s.value}</div>
-                <div style={{ fontSize: 12, color: '#777' }}>{s.label}</div>
+              <div className="card" style={{ padding: '20px', cursor: 'pointer', transition: 'box-shadow 0.15s' }}
+                onMouseEnter={e => (e.currentTarget.style.boxShadow = '0 4px 20px rgba(108,99,255,0.15)')}
+                onMouseLeave={e => (e.currentTarget.style.boxShadow = '')}>
+                <div style={{ width: 40, height: 40, borderRadius: 10, background: s.iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, marginBottom: 12 }}>
+                  {s.icon}
+                </div>
+                <div style={{ fontSize: 28, fontWeight: 800, color: '#1a1a2e', marginBottom: 2 }}>{s.value}</div>
+                <div style={{ fontSize: 12, color: '#777', marginBottom: 4 }}>{s.label}</div>
+                <div style={{ fontSize: 11, color: s.up ? '#16A34A' : '#888', fontWeight: 500 }}>{s.change}</div>
               </div>
             </a>
           ))}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+        {/* Dashboard grid: artėjantys įrašai + approval status */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: '1rem', marginBottom: '1rem' }}>
 
-          {/* Laukia tvirtinimo */}
+          {/* Artėjantys įrašai */}
           <div className="card">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <h2 style={{ fontSize: 15, fontWeight: 600 }}>
-                Laukia tvirtinimo
+              <h2 style={{ fontSize: 14, fontWeight: 700 }}>
+                Artėjantys įrašai
                 {pendingPosts.length > 0 && (
-                  <span style={{ marginLeft: 8, fontSize: 11, background: '#FEF3C7', color: '#92400E', padding: '1px 7px', borderRadius: 10, fontWeight: 500 }}>
+                  <span style={{ marginLeft: 8, fontSize: 11, background: '#FEF3C7', color: '#92400E', padding: '1px 7px', borderRadius: 10, fontWeight: 600 }}>
                     {pendingPosts.length}
                   </span>
                 )}
               </h2>
-              <a href="/reports" style={{ fontSize: 12, color: '#6c63ff', textDecoration: 'none' }}>Visos →</a>
+              <a href="/content" style={{ fontSize: 12, color: '#6c63ff', textDecoration: 'none', fontWeight: 600 }}>Žiūrėti turinį →</a>
             </div>
             {pendingPosts.length === 0 ? (
               <p style={{ fontSize: 13, color: '#aaa', fontStyle: 'italic' }}>Viskas patvirtinta ✓</p>
@@ -138,22 +156,22 @@ export default function DashboardPage() {
                   <a key={post.id} href={`/clients/${post.client_id}#turinys`} style={{ textDecoration: 'none' }}>
                     <div style={{
                       display: 'flex', alignItems: 'center', gap: 10,
-                      padding: '8px 10px', borderRadius: 8,
+                      padding: '9px 12px', borderRadius: 8,
                       background: '#fffbf0', border: '1px solid #FDE68A',
-                    }}>
-                      <div style={{
-                        width: 6, height: 6, borderRadius: '50%', flexShrink: 0,
-                        background: PLATFORM_COLORS[post.platform] || '#999',
-                      }} />
+                    }}
+                      onMouseEnter={e => (e.currentTarget.style.background = '#FEF3C7')}
+                      onMouseLeave={e => (e.currentTarget.style.background = '#fffbf0')}
+                    >
+                      <div style={{ width: 6, height: 6, borderRadius: '50%', flexShrink: 0, background: PLATFORM_COLORS[post.platform] || '#999' }} />
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 13, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#333' }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#333' }}>
                           {post.title}
                         </div>
                         <div style={{ fontSize: 11, color: '#aaa' }}>
                           {post.client_id ? (clientMap[post.client_id] || '—') : '—'} · {post.platform}
                         </div>
                       </div>
-                      <span style={{ fontSize: 11, color: '#D97706', fontWeight: 500 }}>Peržiūrėti →</span>
+                      <span style={{ fontSize: 11, color: '#D97706', fontWeight: 600, whiteSpace: 'nowrap' }}>Peržiūrėti →</span>
                     </div>
                   </a>
                 ))}
@@ -161,53 +179,53 @@ export default function DashboardPage() {
             )}
           </div>
 
-          {/* Aktyvios užduotys */}
+          {/* Approval status mini */}
           <div className="card">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <h2 style={{ fontSize: 15, fontWeight: 600 }}>Aktyvios užduotys</h2>
-              <a href="/tasks" style={{ fontSize: 12, color: '#6c63ff', textDecoration: 'none' }}>Visos →</a>
+              <h2 style={{ fontSize: 14, fontWeight: 700 }}>Tvirtinimo statusas</h2>
+              <a href="/content" style={{ fontSize: 12, color: '#6c63ff', textDecoration: 'none', fontWeight: 600 }}>Visos →</a>
             </div>
-            {activeTasks.length === 0 ? (
-              <p style={{ fontSize: 13, color: '#aaa', fontStyle: 'italic' }}>Nėra aktyvių užduočių</p>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                {activeTasks.map(task => (
-                  <a key={task.id} href={`/clients/${task.client_id}#uzduotys`} style={{ textDecoration: 'none' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 8, background: '#fafafa', border: '1px solid #f0f0f0' }}>
-                      <div style={{
-                        width: 8, height: 8, borderRadius: 2, flexShrink: 0,
-                        background: (PRIORITY_STYLE[task.priority] || PRIORITY_STYLE.low).bg,
-                        border: `1px solid ${(PRIORITY_STYLE[task.priority] || PRIORITY_STYLE.low).color}44`,
-                      }} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {clients.slice(0, 5).map(client => {
+                const clientPosts = allPosts.filter(p => p.client_id === client.id)
+                const pending = clientPosts.filter(p => p.status === 'review').length
+                const published = clientPosts.filter(p => p.status === 'published').length
+                const total = clientPosts.length
+                const pct = total > 0 ? Math.round((published / total) * 100) : 0
+                return (
+                  <a key={client.id} href={`/clients/${client.id}`} style={{ textDecoration: 'none' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <div style={{ width: 28, height: 28, borderRadius: 8, background: '#EEF2FF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800, color: '#4338CA', flexShrink: 0 }}>
+                        {client.company_name.slice(0, 2).toUpperCase()}
+                      </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 13, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#333' }}>
-                          {task.title}
-                        </div>
-                        <div style={{ fontSize: 11, color: '#aaa' }}>
-                          {task.client_id ? (clientMap[task.client_id] || '—') : '—'}
-                          {task.due_date && ` · ${new Date(task.due_date).toLocaleDateString('lt-LT')}`}
+                        <div style={{ fontSize: 12, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{client.company_name}</div>
+                        <div style={{ height: 4, background: '#f0f0f0', borderRadius: 2, marginTop: 4, overflow: 'hidden' }}>
+                          <div style={{ width: `${pct}%`, height: '100%', background: '#6c63ff', borderRadius: 2, transition: 'width 0.3s' }} />
                         </div>
                       </div>
+                      {pending > 0 && (
+                        <span style={{ fontSize: 10, background: '#FEF3C7', color: '#92400E', padding: '1px 6px', borderRadius: 8, fontWeight: 700, flexShrink: 0 }}>{pending}</span>
+                      )}
                     </div>
                   </a>
-                ))}
-              </div>
-            )}
+                )
+              })}
+              {clients.length === 0 && <p style={{ fontSize: 13, color: '#aaa', fontStyle: 'italic' }}>Klientų nėra</p>}
+            </div>
           </div>
         </div>
 
-        {/* Klientų sąrašas */}
+        {/* Aktyvumas — full width */}
         <div className="card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-            <h2 style={{ fontSize: 15, fontWeight: 600 }}>Klientai</h2>
-            <a href="/clients" className="btn-primary" style={{ textDecoration: 'none', fontSize: 12, padding: '5px 12px' }}>
-              + Naujas klientas
-            </a>
+            <h2 style={{ fontSize: 14, fontWeight: 700 }}>Naujausias aktyvumas</h2>
+            <a href="/clients" className="btn-primary" style={{ textDecoration: 'none', fontSize: 11, padding: '4px 12px' }}>+ Naujas klientas</a>
           </div>
           {clients.length === 0 ? (
-            <p style={{ fontSize: 13, color: '#aaa', fontStyle: 'italic' }}>Dar nėra klientų. Pridėkite pirmąjį.</p>
+            <p style={{ fontSize: 13, color: '#aaa', fontStyle: 'italic' }}>Dar nėra klientų.</p>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '0.75rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '0.75rem' }}>
               {clients.map(client => {
                 const clientPosts = allPosts.filter(p => p.client_id === client.id)
                 const clientPending = clientPosts.filter(p => p.status === 'review').length
@@ -215,28 +233,21 @@ export default function DashboardPage() {
                 return (
                   <a key={client.id} href={`/clients/${client.id}`} style={{ textDecoration: 'none' }}>
                     <div style={{
-                      padding: '1rem', borderRadius: 10, border: '1px solid #f0f0f0',
-                      background: '#fafafa', cursor: 'pointer',
-                      transition: 'border-color 0.15s, background 0.15s',
-                    }}>
-                      <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 6, color: '#222' }}>
-                        {client.company_name}
-                      </div>
-                      <div style={{ display: 'flex', gap: 10, fontSize: 12, color: '#888' }}>
-                        <span>✓ {clientPublished} paskelbta</span>
-                        {clientPending > 0 && (
-                          <span style={{ color: '#D97706', fontWeight: 500 }}>⏳ {clientPending} laukia</span>
-                        )}
+                      padding: '14px 16px', borderRadius: 10, border: '1px solid #f0f0f0',
+                      background: '#fafafa', cursor: 'pointer', transition: 'all 0.15s',
+                    }}
+                      onMouseEnter={e => { e.currentTarget.style.borderColor = '#C7D2FE'; e.currentTarget.style.background = '#F5F3FF' }}
+                      onMouseLeave={e => { e.currentTarget.style.borderColor = '#f0f0f0'; e.currentTarget.style.background = '#fafafa' }}
+                    >
+                      <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 6, color: '#222' }}>{client.company_name}</div>
+                      <div style={{ display: 'flex', gap: 10, fontSize: 11, color: '#888' }}>
+                        <span style={{ color: '#16A34A' }}>✓ {clientPublished}</span>
+                        {clientPending > 0 && <span style={{ color: '#D97706', fontWeight: 600 }}>⏳ {clientPending}</span>}
                       </div>
                       {client.social_channels && client.social_channels.length > 0 && (
-                        <div style={{ display: 'flex', gap: 4, marginTop: 8, flexWrap: 'wrap' }}>
+                        <div style={{ display: 'flex', gap: 3, marginTop: 8, flexWrap: 'wrap' }}>
                           {client.social_channels.slice(0, 4).map(ch => (
-                            <span key={ch} style={{
-                              fontSize: 10, padding: '1px 6px', borderRadius: 8,
-                              background: (PLATFORM_COLORS[ch] || '#999') + '18',
-                              color: PLATFORM_COLORS[ch] || '#999',
-                              fontWeight: 600,
-                            }}>
+                            <span key={ch} style={{ fontSize: 10, padding: '1px 6px', borderRadius: 6, background: (PLATFORM_COLORS[ch] || '#999') + '18', color: PLATFORM_COLORS[ch] || '#999', fontWeight: 700 }}>
                               {ch.slice(0, 2).toUpperCase()}
                             </span>
                           ))}
