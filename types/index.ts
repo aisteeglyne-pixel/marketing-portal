@@ -38,7 +38,7 @@ export interface ContentPost {
   title: string
   caption: string | null
   media_url: string | null
-  status: 'draft' | 'review' | 'approved' | 'rejected' | 'published'
+  status: 'draft' | 'review' | 'approved' | 'rejected' | 'published' | 'scheduled'
   platform: string
   publish_date: string | null
   published_at: string | null
