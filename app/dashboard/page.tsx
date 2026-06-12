@@ -40,6 +40,7 @@ export default function PortalPage() {
   const [analyticsPeriod, setAnalyticsPeriod] = useState('thisMonth')
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [newPost, setNewPost] = useState({ title: '', caption: '', platform: 'Instagram', publish_date: '', status: 'draft' as const, contentType: 'post' })
+  const [editingPost, setEditingPost] = useState<ContentPost | null>(null)
   const router = useRouter()
   const supabase = createClient()
 
@@ -109,6 +110,29 @@ export default function PortalPage() {
       setPosts(prev => [data, ...prev])
       setShowCreateModal(false)
       setNewPost({ title: '', caption: '', platform: 'Instagram', publish_date: '', status: 'draft', contentType: 'post' })
+    }
+  }
+  async function handleDuplicate(post: ContentPost) {
+    if (!profile) return
+    const { data } = await supabase.from('content_posts').insert({
+      agency_id: profile.agency_id,
+      client_id: post.client_id,
+      title: post.title + ' (kopija)',
+      caption: post.caption,
+      platform: post.platform,
+      publish_date: null,
+      status: 'draft',
+    }).select().single()
+    if (data) setPosts(prev => [data, ...prev])
+  }
+  async function handleSaveEdit() {
+    if (!editingPost) return
+    const { data } = await supabase.from('content_posts')
+      .update({ title: editingPost.title, caption: editingPost.caption, platform: editingPost.platform, publish_date: editingPost.publish_date || null })
+      .eq('id', editingPost.id).select().single()
+    if (data) {
+      setPosts(prev => prev.map(p => p.id === data.id ? data : p))
+      setEditingPost(null)
     }
   }
 
@@ -456,11 +480,27 @@ export default function PortalPage() {
                           <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 6, fontWeight: 600, background: sm.bg, color: sm.color }}>{sm.label}</span>
                         </div>
                         <div className="td" style={{ fontSize: 12, color: 'var(--text-muted)' }}>{post.publish_date ? new Date(post.publish_date).toLocaleDateString('lt-LT') : '—'}</div>
-                        <div className="td" style={{ display: 'flex', gap: 6 }}>
-                          {post.status === 'review' && <>
-                            <button className="btn btn-success btn-sm" onClick={() => handleApprove(post.id)}>✓</button>
-                            <button className="btn btn-danger btn-sm" onClick={() => handleReject(post.id)}>✕</button>
-                          </>}
+                        <div className="td" style={{ display: 'flex', gap: 4, flexWrap: 'nowrap' }}>
+                          <button
+                            className="btn btn-sm"
+                            style={{ background: '#D1FAE5', color: '#065F46', border: 'none', opacity: post.status === 'review' ? 1 : 0.35, cursor: post.status === 'review' ? 'pointer' : 'default' }}
+                            title="Patvirtinti"
+                            onClick={() => post.status === 'review' && handleApprove(post.id)}>✓</button>
+                          <button
+                            className="btn btn-sm"
+                            style={{ background: '#FEE2E2', color: '#991B1B', border: 'none', opacity: post.status === 'review' ? 1 : 0.35, cursor: post.status === 'review' ? 'pointer' : 'default' }}
+                            title="Atmesti"
+                            onClick={() => post.status === 'review' && handleReject(post.id)}>✕</button>
+                          <button
+                            className="btn btn-sm"
+                            style={{ background: '#EEF2FF', color: '#3730A3', border: 'none' }}
+                            title="Koreguoti"
+                            onClick={() => setEditingPost(post)}>✏️</button>
+                          <button
+                            className="btn btn-sm"
+                            style={{ background: '#F3F4F6', color: '#374151', border: 'none' }}
+                            title="Dublikuoti"
+                            onClick={() => handleDuplicate(post)}>📋</button>
                         </div>
                       </div>
                     )
@@ -836,6 +876,44 @@ export default function PortalPage() {
               <button className="btn btn-outline" onClick={() => setShowCreateModal(false)}>Atšaukti</button>
               <button className="btn btn-outline" onClick={() => { setNewPost(p => ({...p, status: 'draft'})); handleCreatePost() }}>💾 Juodraštis</button>
               <button className="btn btn-primary" onClick={handleCreatePost}>📤 Siųsti peržiūrai →</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ===== EDIT POST MODAL ===== */}
+      {editingPost && (
+        <div className="modal-overlay open" onClick={e => { if (e.target === e.currentTarget) setEditingPost(null) }}>
+          <div className="modal" style={{ width: 520, maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
+            <div className="modal-header">
+              <h3>✏️ Koreguoti įrašą</h3>
+              <button className="btn btn-ghost btn-sm" onClick={() => setEditingPost(null)}>✕</button>
+            </div>
+            <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 16, overflowY: 'auto' }}>
+              <div className="form-group">
+                <label className="form-label">Pavadinimas</label>
+                <input className="form-input" value={editingPost.title || ''} onChange={e => setEditingPost(p => p ? { ...p, title: e.target.value } : p)} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Tekstas</label>
+                <textarea className="form-input" rows={5} value={editingPost.caption || ''} onChange={e => setEditingPost(p => p ? { ...p, caption: e.target.value } : p)} style={{ resize: 'vertical', fontFamily: 'inherit' }} />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div className="form-group">
+                  <label className="form-label">Platforma</label>
+                  <select className="select-box" style={{ width: '100%' }} value={editingPost.platform} onChange={e => setEditingPost(p => p ? { ...p, platform: e.target.value } : p)}>
+                    {['Instagram','Facebook','LinkedIn','TikTok','X','YouTube'].map(pl => <option key={pl}>{pl}</option>)}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Data</label>
+                  <input type="date" className="form-input" value={editingPost.publish_date || ''} onChange={e => setEditingPost(p => p ? { ...p, publish_date: e.target.value } : p)} />
+                </div>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-outline" onClick={() => setEditingPost(null)}>Atšaukti</button>
+              <button className="btn btn-primary" onClick={handleSaveEdit}>💾 Išsaugoti</button>
             </div>
           </div>
         </div>
