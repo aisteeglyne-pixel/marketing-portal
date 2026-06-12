@@ -42,6 +42,7 @@ export default function PortalPage() {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [editingPost, setEditingPost] = useState<ContentPost | null>(null)
   const [selectedPost, setSelectedPost] = useState<ContentPost | null>(null)
+  const [toast, setToast] = useState('')
   const router = useRouter()
   const supabase = createClient()
 
@@ -78,16 +79,24 @@ export default function PortalPage() {
   const clientMap = Object.fromEntries(clients.map(c => [c.id, c]))
   const pendingPosts = posts.filter(p => p.status === 'review')
 
+  function showToast(msg: string) {
+    setToast(msg)
+    setTimeout(() => setToast(''), 2600)
+  }
+
   function updatePost(updated: ContentPost) {
     setPosts(prev => prev.map(p => p.id === updated.id ? updated : p))
   }
-  async function handleApprove(postId: string) {
-    await supabase.from('content_posts').update({ status: 'approved' }).eq('id', postId)
-    setPosts(prev => prev.map(p => p.id === postId ? { ...p, status: 'approved' as const } : p))
+  async function setStatus(postId: string, status: ContentPost['status'], toastMsg?: string) {
+    await supabase.from('content_posts').update({ status }).eq('id', postId)
+    setPosts(prev => prev.map(p => p.id === postId ? { ...p, status } : p))
+    if (toastMsg) showToast(toastMsg)
   }
-  async function handleReject(postId: string) {
-    await supabase.from('content_posts').update({ status: 'rejected' }).eq('id', postId)
-    setPosts(prev => prev.map(p => p.id === postId ? { ...p, status: 'rejected' as const } : p))
+  const handleApprove = (postId: string) => setStatus(postId, 'approved', '✅ Įrašas patvirtintas')
+  const handleNeedsChanges = (postId: string) => setStatus(postId, 'rejected', '↩ Grąžinta taisymui')
+  async function handleSchedule(post: ContentPost) {
+    if (!post.publish_date) { showToast('⚠️ Pirma nustatyk datą (per ✏️ koregavimą)'); return }
+    await setStatus(post.id, 'scheduled', '🚀 Suplanuota: ' + post.title)
   }
   async function handleTaskDone(taskId: string) {
     await supabase.from('tasks').update({ status: 'done' }).eq('id', taskId)
@@ -101,10 +110,19 @@ export default function PortalPage() {
       title: post.title + ' (kopija)',
       caption: post.caption,
       platform: post.platform,
+      content_type: post.content_type || 'post',
+      media_url: post.media_url,
       publish_date: null,
       status: 'draft',
     }).select().single()
-    if (data) setPosts(prev => [data, ...prev])
+    if (data) { setPosts(prev => [data, ...prev]); showToast('📋 Įrašas nukopijuotas') }
+  }
+  async function handleDelete(post: ContentPost) {
+    if (!confirm(`Ištrinti įrašą „${post.title}"? Šio veiksmo atšaukti negalima.`)) return
+    const { error } = await supabase.from('content_posts').delete().eq('id', post.id)
+    if (error) { showToast('⚠️ Nepavyko ištrinti: ' + error.message); return }
+    setPosts(prev => prev.filter(p => p.id !== post.id))
+    showToast('🗑️ Įrašas ištrintas')
   }
 
   if (loading || !profile) return (
@@ -164,7 +182,7 @@ export default function PortalPage() {
                 </div>
               )
             })}
-            <div className="nav-item" style={{ opacity: 0.6, fontSize: 12 }} onClick={() => navTo('dashboard')}>
+            <div className="nav-item" style={{ opacity: 0.6, fontSize: 12 }} onClick={() => showToast('➕ Klientų kūrimas — Admin valdyme (netrukus)')}>
               <span className="nav-icon">➕</span> Pridėti klientą
             </div>
           </div>
@@ -192,7 +210,6 @@ export default function PortalPage() {
 
       {/* ===== MAIN ===== */}
       <div id="main">
-        {/* Topbar */}
         <div className="topbar">
           <div className="topbar-title">
             {activeClient ? activeClient.company_name : VIEW_TITLES[activeView]}
@@ -203,41 +220,46 @@ export default function PortalPage() {
           </div>
         </div>
 
-        {/* View container */}
         <div className="view-container" style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
           {activeView === 'dashboard' && !activeClient && (
             <DashboardView
               profile={profile} clients={clients} posts={posts} tasks={tasks} clientMap={clientMap}
-              onNavCalendar={() => navTo('calendar')} onNavApprovals={() => navTo('approvals')} onOpenClient={openClient}
+              onNavCalendar={() => navTo('calendar')} onNavApprovals={() => navTo('approvals')}
+              onOpenClient={openClient} onSelectPost={setSelectedPost} onApprove={handleApprove}
             />
           )}
           {activeView === 'calendar' && !activeClient && (
-            <CalendarView posts={posts} onNewPost={() => setShowCreateModal(true)} onSelectPost={setSelectedPost} />
+            <CalendarView posts={posts} clientMap={clientMap} onNewPost={() => setShowCreateModal(true)} onSelectPost={setSelectedPost} />
           )}
           {activeView === 'posts' && !activeClient && (
             <PostsView
-              posts={posts} clients={clients} clientMap={clientMap} activeClient={activeClient}
+              posts={posts} clients={clients} clientMap={clientMap}
               onNewPost={() => setShowCreateModal(true)} onSelectPost={setSelectedPost}
-              onApprove={handleApprove} onReject={handleReject} onEdit={setEditingPost} onDuplicate={handleDuplicate}
+              onEdit={setEditingPost} onDuplicate={handleDuplicate} onDelete={handleDelete}
             />
           )}
           {activeView === 'approvals' && !activeClient && (
-            <ApprovalsView posts={posts} clientMap={clientMap} onSelectPost={setSelectedPost} onApprove={handleApprove} onReject={handleReject} />
+            <ApprovalsView
+              posts={posts} clientMap={clientMap} onSelectPost={setSelectedPost}
+              onApprove={handleApprove} onNeedsChanges={handleNeedsChanges}
+              onSchedule={handleSchedule} onDuplicate={handleDuplicate} showToast={showToast}
+            />
           )}
           {activeView === 'analytics' && !activeClient && (
             <AnalyticsView posts={posts} clients={clients} onOpenClient={openClient} />
           )}
           {activeView === 'team' && !activeClient && (
-            <TeamView team={team} clientCount={clients.length} />
+            <TeamView team={team} clients={clients} tasks={tasks} showToast={showToast} />
           )}
           {activeView === 'brand' && !activeClient && (
-            <BrandHubView />
+            <BrandHubView showToast={showToast} />
           )}
           {activeView === 'client' && activeClient && (
             <ClientWorkspaceView
-              client={activeClient} posts={posts} tasks={tasks}
+              client={activeClient} posts={posts} tasks={tasks} team={team}
               onNewPost={() => setShowCreateModal(true)} onSelectPost={setSelectedPost}
-              onApprove={handleApprove} onReject={handleReject} onTaskDone={handleTaskDone}
+              onApprove={handleApprove} onNeedsChanges={handleNeedsChanges}
+              onTaskDone={handleTaskDone} showToast={showToast}
             />
           )}
         </div>
@@ -250,14 +272,14 @@ export default function PortalPage() {
           clients={clients}
           activeClient={activeClient}
           onClose={() => setShowCreateModal(false)}
-          onCreated={post => { setPosts(prev => [post, ...prev]); setShowCreateModal(false) }}
+          onCreated={post => { setPosts(prev => [post, ...prev]); setShowCreateModal(false); showToast('✓ Įrašas sukurtas') }}
         />
       )}
       {editingPost && (
         <EditPostModal
           post={editingPost}
           onClose={() => setEditingPost(null)}
-          onSaved={post => { updatePost(post); setEditingPost(null) }}
+          onSaved={post => { updatePost(post); setEditingPost(null); showToast('💾 Išsaugota') }}
         />
       )}
       {selectedPost && (
@@ -268,6 +290,13 @@ export default function PortalPage() {
           onClose={() => setSelectedPost(null)}
           onUpdate={updated => { updatePost(updated); setSelectedPost(updated) }}
         />
+      )}
+
+      {/* Toast */}
+      {toast && (
+        <div className="toast" style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', background: '#1E181C', color: '#fff', padding: '10px 20px', borderRadius: 10, fontSize: 13, fontWeight: 600, zIndex: 300, boxShadow: '0 8px 30px rgba(0,0,0,0.3)' }}>
+          {toast}
+        </div>
       )}
     </div>
   )

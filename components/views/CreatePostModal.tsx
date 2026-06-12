@@ -40,6 +40,7 @@ export default function CreatePostModal({ agencyId, clients, activeClient, onClo
       title: newPost.title,
       caption: newPost.caption,
       platform: newPost.platform,
+      content_type: newPost.contentType,
       publish_date: newPost.publish_date || null,
       media_url: newPost.media_url || null,
       status,

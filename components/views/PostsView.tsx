@@ -2,22 +2,21 @@
 
 import { useState } from 'react'
 import { PLATFORM_COLORS, STATUS_META } from '@/lib/portal-constants'
+import { statusLabel, typeIcon, fmtDate, fmtTime, isVideoUrl } from '@/lib/portal-helpers'
 import type { Client, ContentPost } from '@/types'
 
 interface PostsViewProps {
   posts: ContentPost[]
   clients: Client[]
   clientMap: Record<string, Client>
-  activeClient: Client | null
   onNewPost: () => void
   onSelectPost: (post: ContentPost) => void
-  onApprove: (postId: string) => void
-  onReject: (postId: string) => void
   onEdit: (post: ContentPost) => void
   onDuplicate: (post: ContentPost) => void
+  onDelete: (post: ContentPost) => void
 }
 
-export default function PostsView({ posts, clients, clientMap, activeClient, onNewPost, onSelectPost, onApprove, onReject, onEdit, onDuplicate }: PostsViewProps) {
+export default function PostsView({ posts, clients, clientMap, onNewPost, onSelectPost, onEdit, onDuplicate, onDelete }: PostsViewProps) {
   const [postFilter, setPostFilter] = useState('all')
   const [platformFilter, setPlatformFilter] = useState('all')
   const [clientFilter, setClientFilter] = useState('all')
@@ -26,7 +25,8 @@ export default function PostsView({ posts, clients, clientMap, activeClient, onN
     .filter(p => postFilter === 'all' || p.status === postFilter)
     .filter(p => platformFilter === 'all' || p.platform === platformFilter)
     .filter(p => clientFilter === 'all' || p.client_id === clientFilter)
-    .filter(p => !activeClient || p.client_id === activeClient.id)
+
+  const typeOf = (p: ContentPost) => p.content_type || 'post'
 
   return (
     <div className="view active">
@@ -58,43 +58,40 @@ export default function PostsView({ posts, clients, clientMap, activeClient, onN
           <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: 14 }}>Įrašų nerasta</div>
         ) : (
           filteredPosts.map(post => {
-            const sm = STATUS_META[post.status] || STATUS_META.draft
+            const pColor = PLATFORM_COLORS[post.platform] || '#999'
+            const t = typeOf(post)
             return (
-              <div key={post.id} className="table-row">
-                <div className="td" style={{ cursor: 'pointer' }} onClick={() => onSelectPost(post)}>
-                  <div style={{ fontWeight: 600, fontSize: 13 }}>{post.title || '(Be pavadinimo)'}</div>
-                  {post.caption && <div style={{ fontSize: 11, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 260 }}>{post.caption}</div>}
+              <div key={post.id} className="table-row" style={{ cursor: 'pointer' }} onClick={() => onSelectPost(post)}>
+                <div className="td" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  {post.media_url ? (
+                    isVideoUrl(post.media_url)
+                      ? <video className="post-img-thumb" src={post.media_url} />
+                      : <img className="post-img-thumb" src={post.media_url} alt="" />
+                  ) : (
+                    <div className="post-img-placeholder" style={{ background: `${pColor}18` }}>{typeIcon(t)}</div>
+                  )}
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <div className="post-row-title">{post.title || '(Be pavadinimo)'}</div>
+                      <span className={`type-badge type-${t}`}>{t.charAt(0).toUpperCase() + t.slice(1)}</span>
+                    </div>
+                    {post.caption && <div className="post-row-preview">{post.caption.substring(0, 55)}…</div>}
+                  </div>
                 </div>
-                <div className="td" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: PLATFORM_COLORS[post.platform] || '#ccc' }} />
-                  <span style={{ fontSize: 12 }}>{post.platform}</span>
-                </div>
-                <div className="td" style={{ fontSize: 12 }}>{post.client_id ? clientMap[post.client_id]?.company_name || '—' : '—'}</div>
                 <div className="td">
-                  <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 6, fontWeight: 600, background: sm.bg, color: sm.color }}>{sm.label}</span>
+                  <div className="platform-pills">
+                    <div className="platform-pill" style={{ background: pColor }} title={post.platform}>{post.platform.slice(0, 2).toUpperCase()}</div>
+                  </div>
                 </div>
-                <div className="td" style={{ fontSize: 12, color: 'var(--text-muted)' }}>{post.publish_date ? new Date(post.publish_date).toLocaleDateString('lt-LT') : '—'}</div>
-                <div className="td" style={{ display: 'flex', gap: 4, flexWrap: 'nowrap' }}>
-                  <button
-                    className="btn btn-sm"
-                    style={{ background: '#D1FAE5', color: '#065F46', border: 'none', opacity: post.status === 'review' ? 1 : 0.35, cursor: post.status === 'review' ? 'pointer' : 'default' }}
-                    title="Patvirtinti"
-                    onClick={() => post.status === 'review' && onApprove(post.id)}>✓</button>
-                  <button
-                    className="btn btn-sm"
-                    style={{ background: '#FEE2E2', color: '#991B1B', border: 'none', opacity: post.status === 'review' ? 1 : 0.35, cursor: post.status === 'review' ? 'pointer' : 'default' }}
-                    title="Atmesti"
-                    onClick={() => post.status === 'review' && onReject(post.id)}>✕</button>
-                  <button
-                    className="btn btn-sm"
-                    style={{ background: '#EEF2FF', color: '#3730A3', border: 'none' }}
-                    title="Koreguoti"
-                    onClick={() => onEdit(post)}>✏️</button>
-                  <button
-                    className="btn btn-sm"
-                    style={{ background: '#F3F4F6', color: '#374151', border: 'none' }}
-                    title="Dublikuoti"
-                    onClick={() => onDuplicate(post)}>📋</button>
+                <div className="td" style={{ fontSize: 12, fontWeight: 600 }}>{post.client_id ? clientMap[post.client_id]?.company_name || '—' : '—'}</div>
+                <div className="td"><span className={`status-badge status-${post.status}`}><span className="status-dot"></span>{statusLabel(post.status)}</span></div>
+                <div className="td" style={{ fontSize: 12, color: 'var(--text-muted)' }}>{fmtDate(post.publish_date)} {fmtTime(post.publish_date)}</div>
+                <div className="td">
+                  <div style={{ display: 'flex', gap: 4 }}>
+                    <button className="btn btn-ghost btn-sm" title="Koreguoti" onClick={e => { e.stopPropagation(); onEdit(post) }}>✏️</button>
+                    <button className="btn btn-ghost btn-sm" title="Dublikuoti" onClick={e => { e.stopPropagation(); onDuplicate(post) }}>📋</button>
+                    <button className="btn btn-ghost btn-sm" title="Ištrinti" onClick={e => { e.stopPropagation(); onDelete(post) }}>🗑️</button>
+                  </div>
                 </div>
               </div>
             )

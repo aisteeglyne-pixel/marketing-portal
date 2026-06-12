@@ -254,6 +254,8 @@
   .status-scheduled .status-dot { background:#3949AB; }
   .status-published { background:#E0F7FA; color:#00838F; }
   .status-published .status-dot { background:#00838F; }
+  .status-rejected { background:#FCEBEB; color:#C62828; }
+  .status-rejected .status-dot { background:#C62828; }
 
   /* ===== APPROVALS ===== */
   .approvals-tabs { display:flex; gap:0; margin-bottom:20px; background:var(--surface); border-radius:var(--radius); padding:4px; box-shadow:var(--shadow); border:1px solid var(--border); width:fit-content; }

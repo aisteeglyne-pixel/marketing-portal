@@ -39,6 +39,7 @@ export interface ContentPost {
   caption: string | null
   media_url: string | null
   status: 'draft' | 'review' | 'approved' | 'rejected' | 'published' | 'scheduled'
+  content_type?: 'post' | 'story' | 'reel' | null
   platform: string
   publish_date: string | null
   published_at: string | null
@@ -51,6 +52,7 @@ export interface Comment {
   task_id: string | null
   author_id: string
   text: string
+  comment_type?: 'internal' | 'external' | null
   created_at: string
   author?: { full_name: string | null; email: string }
 }
