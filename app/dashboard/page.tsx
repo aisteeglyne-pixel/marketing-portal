@@ -16,9 +16,10 @@ import TeamView from '@/components/views/TeamView'
 import BrandHubView from '@/components/views/BrandHubView'
 import ClientWorkspaceView from '@/components/views/ClientWorkspaceView'
 import AdminView from '@/components/views/AdminView'
-import type { Client, ContentPost, Task } from '@/types'
+import ProjectsView from '@/components/views/ProjectsView'
+import type { Client, ContentPost, Task, Project } from '@/types'
 
-type View = 'dashboard' | 'calendar' | 'posts' | 'approvals' | 'analytics' | 'team' | 'brand' | 'client' | 'admin'
+type View = 'dashboard' | 'calendar' | 'posts' | 'approvals' | 'analytics' | 'team' | 'brand' | 'client' | 'admin' | 'projects'
 
 const VIEW_TITLES: Record<View, string> = {
   dashboard: 'Dashboard',
@@ -30,6 +31,7 @@ const VIEW_TITLES: Record<View, string> = {
   brand: 'Brand Hub',
   client: '',
   admin: 'Admin valdymas',
+  projects: 'Projektai',
 }
 
 export default function PortalPage() {
@@ -38,6 +40,7 @@ export default function PortalPage() {
   const [posts, setPosts] = useState<ContentPost[]>([])
   const [tasks, setTasks] = useState<Task[]>([])
   const [team, setTeam] = useState<any[]>([])
+  const [projects, setProjects] = useState<Project[]>([])
   const [activeView, setActiveView] = useState<View>('dashboard')
   const [activeClient, setActiveClient] = useState<Client | null>(null)
   const [loading, setLoading] = useState(true)
@@ -63,16 +66,19 @@ export default function PortalPage() {
         { data: postsData },
         { data: tasksData },
         { data: teamData },
+        { data: projectsData },
       ] = await Promise.all([
         supabase.from('clients').select('*').eq('agency_id', p.agency_id).order('company_name'),
         supabase.from('content_posts').select('*').eq('agency_id', p.agency_id).order('created_at', { ascending: false }),
         supabase.from('tasks').select('*').eq('agency_id', p.agency_id).order('created_at', { ascending: false }),
         supabase.from('profiles').select('*').eq('agency_id', p.agency_id),
+        supabase.from('projects').select('*').eq('agency_id', p.agency_id).eq('status', 'active').order('created_at'),
       ])
       setClients(clientsData || [])
       setPosts(postsData || [])
       setTasks(tasksData || [])
       setTeam(teamData || [])
+      setProjects(projectsData || [])
       setLoading(false)
     }
     load()
@@ -159,6 +165,14 @@ export default function PortalPage() {
                 <span className="nav-icon">{item.icon}</span> {item.label}
               </div>
             ))}
+          </div>
+          <div className="nav-section">
+            <div className="nav-section-title">Agentūra</div>
+            <div className={`nav-item${activeView === 'projects' && !activeClient ? ' active' : ''}`} onClick={() => navTo('projects')}>
+              <span className="nav-icon">📋</span> Projektai
+              {tasks.filter(t => t.assigned_to === profile?.id && t.status !== 'done' && t.type !== 'client_request').length > 0 &&
+                <span className="nav-badge">{tasks.filter(t => t.assigned_to === profile?.id && t.status !== 'done' && t.type !== 'client_request').length}</span>}
+            </div>
           </div>
           <div className="nav-section">
             <div className="nav-section-title">Workflow</div>
@@ -258,6 +272,17 @@ export default function PortalPage() {
           )}
           {activeView === 'brand' && !activeClient && (
             <BrandHubView showToast={showToast} />
+          )}
+          {activeView === 'projects' && !activeClient && (
+            <ProjectsView
+              profile={profile} clients={clients} team={team} projects={projects} tasks={tasks}
+              onProjectCreated={p => setProjects(prev => [...prev, p])}
+              onProjectUpdated={p => setProjects(prev => prev.map(x => x.id === p.id ? p : x))}
+              onTaskCreated={t => setTasks(prev => [t, ...prev])}
+              onTaskUpdated={t => setTasks(prev => prev.map(x => x.id === t.id ? t : x))}
+              onTaskDeleted={id => setTasks(prev => prev.filter(x => x.id !== id))}
+              showToast={showToast}
+            />
           )}
           {activeView === 'admin' && !activeClient && (
             <AdminView

@@ -63,6 +63,7 @@ export interface Project {
   client_id: string | null
   name: string
   description: string | null
+  status_note: string | null
   color: string
   status: 'active' | 'archived'
   due_date: string | null
@@ -78,8 +79,9 @@ export interface Task {
   project_id: string | null
   title: string
   description: string | null
-  status: 'backlog' | 'in_progress' | 'review' | 'done'
+  status: 'backlog' | 'pending' | 'in_progress' | 'review' | 'done'
   priority: 'low' | 'medium' | 'high'
+  sort_order?: number
   due_date: string | null
   assigned_to: string | null
   type: 'agency_task' | 'client_request'
