@@ -265,7 +265,7 @@ export default function PortalPage() {
               onOpenClient={openClient}
               onClientCreated={c => setClients(prev => [...prev, c].sort((a, b) => a.company_name.localeCompare(b.company_name)))}
               onClientUpdated={c => setClients(prev => prev.map(x => x.id === c.id ? c : x))}
-              onClientDeleted={id => { setClients(prev => prev.filter(x => x.id !== id)); if (activeClient?.id === id) setActiveClient(null) }}
+              onClientDeleted={id => setClients(prev => prev.filter(x => x.id !== id))}
               onTeamUpdated={m => setTeam(prev => prev.map(x => x.id === m.id ? m : x))}
               showToast={showToast}
             />
