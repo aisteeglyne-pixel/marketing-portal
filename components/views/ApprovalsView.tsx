@@ -58,7 +58,7 @@ export default function ApprovalsView({ posts, clientMap, onSelectPost, onApprov
       author_id: authData.user?.id ?? null,
       text,
       comment_type: ctype,
-    }).select('id, content_post_id, text, created_at, comment_type').single()
+    }).select('id, content_post_id, text, created_at, comment_type, author:profiles(full_name, email)').single()
     if (data) {
       setComments(prev => ({ ...prev, [postId]: [...(prev[postId] || []), data as any] }))
       setCommentDrafts(prev => ({ ...prev, [postId]: '' }))

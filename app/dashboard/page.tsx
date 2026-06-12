@@ -15,9 +15,10 @@ import AnalyticsView from '@/components/views/AnalyticsView'
 import TeamView from '@/components/views/TeamView'
 import BrandHubView from '@/components/views/BrandHubView'
 import ClientWorkspaceView from '@/components/views/ClientWorkspaceView'
+import AdminView from '@/components/views/AdminView'
 import type { Client, ContentPost, Task } from '@/types'
 
-type View = 'dashboard' | 'calendar' | 'posts' | 'approvals' | 'analytics' | 'team' | 'brand' | 'client'
+type View = 'dashboard' | 'calendar' | 'posts' | 'approvals' | 'analytics' | 'team' | 'brand' | 'client' | 'admin'
 
 const VIEW_TITLES: Record<View, string> = {
   dashboard: 'Dashboard',
@@ -28,6 +29,7 @@ const VIEW_TITLES: Record<View, string> = {
   team: 'Komanda',
   brand: 'Brand Hub',
   client: '',
+  admin: 'Admin valdymas',
 }
 
 export default function PortalPage() {
@@ -182,7 +184,7 @@ export default function PortalPage() {
                 </div>
               )
             })}
-            <div className="nav-item" style={{ opacity: 0.6, fontSize: 12 }} onClick={() => showToast('➕ Klientų kūrimas — Admin valdyme (netrukus)')}>
+            <div className="nav-item" style={{ opacity: 0.6, fontSize: 12 }} onClick={() => navTo('admin')}>
               <span className="nav-icon">➕</span> Pridėti klientą
             </div>
           </div>
@@ -193,6 +195,9 @@ export default function PortalPage() {
             </div>
             <div className={`nav-item${activeView === 'brand' && !activeClient ? ' active' : ''}`} onClick={() => navTo('brand')}>
               <span className="nav-icon">🎨</span> Brand Hub
+            </div>
+            <div className={`nav-item${activeView === 'admin' && !activeClient ? ' active' : ''}`} onClick={() => navTo('admin')}>
+              <span className="nav-icon">⚙️</span> Admin valdymas
             </div>
           </div>
         </nav>
@@ -253,6 +258,17 @@ export default function PortalPage() {
           )}
           {activeView === 'brand' && !activeClient && (
             <BrandHubView showToast={showToast} />
+          )}
+          {activeView === 'admin' && !activeClient && (
+            <AdminView
+              profile={profile} clients={clients} team={team} posts={posts}
+              onOpenClient={openClient}
+              onClientCreated={c => setClients(prev => [...prev, c].sort((a, b) => a.company_name.localeCompare(b.company_name)))}
+              onClientUpdated={c => setClients(prev => prev.map(x => x.id === c.id ? c : x))}
+              onClientDeleted={id => { setClients(prev => prev.filter(x => x.id !== id)); if (activeClient?.id === id) setActiveClient(null) }}
+              onTeamUpdated={m => setTeam(prev => prev.map(x => x.id === m.id ? m : x))}
+              showToast={showToast}
+            />
           )}
           {activeView === 'client' && activeClient && (
             <ClientWorkspaceView
