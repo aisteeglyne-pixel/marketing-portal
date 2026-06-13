@@ -43,7 +43,7 @@ export default function ClientOverviewView({ profile, client, posts, tasks, goal
         {stats.map(s => (
           <div key={s.label} className="card" style={{ padding: 22, cursor: 'pointer' }} onClick={() => onNav(s.view)}>
             <div style={{ fontSize: 22, marginBottom: 8 }}>{s.icon}</div>
-            <div style={{ fontSize: 38, fontWeight: 800, color: s.accent, fontFamily: 'Neuething Sans, sans-serif', lineHeight: 1 }}>{s.value}</div>
+            <div style={{ fontSize: 38, fontWeight: 800, color: s.accent, fontFamily: 'Work Sans, sans-serif', lineHeight: 1 }}>{s.value}</div>
             <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 6 }}>{s.label}</div>
           </div>
         ))}

@@ -191,9 +191,7 @@ export default function PortalPage() {
       {/* ===== SIDEBAR ===== */}
       <aside id="sidebar">
         <div className="sidebar-logo">
-          <div className="logo-text" style={{ fontFamily: 'Neuething Sans, sans-serif', fontSize: 28, fontWeight: 800, lineHeight: 1, letterSpacing: '-0.01em' }}>
-            dar<span style={{ color: 'var(--primary)' }}>.</span>om
-          </div>
+          <img src="/darom-sviesus.svg" alt="dar.om" style={{ height: 28, width: 'auto' }} />
         </div>
         <nav className="sidebar-nav">
           <div className="nav-section">

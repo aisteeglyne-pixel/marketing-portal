@@ -55,7 +55,7 @@
   h1, h2, h3, h4, h5, h6,
   .topbar-title, .stat-value, .welcome-banner h2,
   .cal-month, .modal-title, .client-workspace-title,
-  .section-title { font-family: 'Neuething Sans', 'Work Sans', sans-serif; letter-spacing: -0.01em; }
+  .section-title { font-family: 'Work Sans', system-ui, sans-serif; }
 
   body { font-family: 'Work Sans', system-ui, sans-serif; background:var(--bg); color:var(--text); margin:0; padding:0; }
 

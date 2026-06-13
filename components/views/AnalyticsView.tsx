@@ -128,7 +128,7 @@ function ContentTab({ posts, clients, onOpenClient }: { posts: ContentPost[]; cl
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
         <div className="card" style={{ padding: 22 }}>
           <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-muted)', marginBottom: 8 }}>Paskelbti įrašai</div>
-          <div style={{ fontSize: 40, fontWeight: 800, color: 'var(--primary)', fontFamily: 'Neuething Sans, sans-serif' }}>{periodPublished.length}</div>
+          <div style={{ fontSize: 40, fontWeight: 800, color: 'var(--primary)', fontFamily: 'Work Sans, sans-serif' }}>{periodPublished.length}</div>
           <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>
             {regular} post{regular !== 1 ? 'ai' : ''} · {stories} stor{stories !== 1 ? 'ies' : 'y'} · {reels} reel{reels !== 1 ? 'ai' : 'as'}
           </div>
