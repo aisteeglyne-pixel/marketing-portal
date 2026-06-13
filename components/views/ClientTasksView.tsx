@@ -61,7 +61,7 @@ export default function ClientTasksView({ profile, tasks, onTaskCreated, showToa
       {showForm && (
         <div className="card" style={{ padding: 18, marginBottom: 16 }}>
           <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 10 }}>Naujas prašymas</div>
-          <input className="form-input" placeholder="Ko reikia? (pvz. „Reels apie naują produktą")" value={title}
+          <input className="form-input" placeholder="Ko reikia? Pvz. Reels apie naują produktą" value={title}
             onChange={e => setTitle(e.target.value)} style={{ width: '100%', marginBottom: 8 }} autoFocus />
           <textarea className="form-input" rows={3} placeholder="Detalės (neprivaloma)" value={desc}
             onChange={e => setDesc(e.target.value)} style={{ width: '100%', resize: 'vertical', fontFamily: 'inherit' }} />
