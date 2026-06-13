@@ -6,26 +6,42 @@
 
 
 
+@font-face {
+  font-family: 'Neuething Sans';
+  src: url('/fonts/NeuethingSans-variableVF.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Amore Benkova';
+  src: url('/fonts/NCLAmoreBenkova-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
   :root {
     --sidebar-bg: #1E181C;
     --sidebar-width: 240px;
-    --primary: #6c63ff;
-    --primary-light: #EEF2FF;
-    --primary-dark: #4338CA;
-    --accent: #a5b4fc;
+    --primary: #FF68D8;
+    --primary-light: #FCE3F6;
+    --primary-dark: #E23DBE;
+    --accent: #55111D;
+    --wine: #55111D;
     --success: #22C55E;
     --warning: #F59E0B;
     --danger: #EF4444;
     --info: #3B82F6;
-    --bg: #f0f0f8;
+    --bg: #F6EAF2;
     --surface: #FFFFFF;
-    --border: #e0e0f0;
+    --border: #EBD7E5;
     --text: #1E181C;
-    --text-muted: #7c6a9c;
-    --text-sidebar: #c7d2fe;
+    --text-muted: #8A6F82;
+    --text-sidebar: #E9C9E0;
     --radius: 12px;
-    --shadow: 0 2px 12px rgba(108,99,255,0.08);
-    --shadow-md: 0 4px 24px rgba(108,99,255,0.12);
+    --shadow: 0 2px 12px rgba(85,17,29,0.08);
+    --shadow-md: 0 4px 24px rgba(85,17,29,0.12);
     --instagram: #E1306C;
     --facebook: #1877F2;
     --linkedin: #0A66C2;
@@ -39,9 +55,9 @@
   h1, h2, h3, h4, h5, h6,
   .topbar-title, .stat-value, .welcome-banner h2,
   .cal-month, .modal-title, .client-workspace-title,
-  .section-title { font-family: 'Sora', sans-serif; }
+  .section-title { font-family: 'Neuething Sans', 'Work Sans', sans-serif; letter-spacing: -0.01em; }
 
-  body { font-family: 'Sora', system-ui, sans-serif; background:var(--bg); color:var(--text); margin:0; padding:0; }
+  body { font-family: 'Work Sans', system-ui, sans-serif; background:var(--bg); color:var(--text); margin:0; padding:0; }
 
   /* ===== SIDEBAR ===== */
   #sidebar {
@@ -71,7 +87,7 @@
     transition:all 0.15s; position:relative; margin-bottom:1px;
   }
   .nav-item:hover { background:rgba(108,99,255,0.18); color:#fff; }
-  .nav-item.active { background:var(--primary); color:#fff; }
+  .nav-item.active { background:var(--primary); color:#1E181C; font-weight:600; }
   .nav-item .nav-icon { width:18px; height:18px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
   .nav-badge {
     margin-left:auto; background:var(--accent); color:#fff; font-size:10px; font-weight:700;
@@ -103,7 +119,7 @@
     display:inline-flex; align-items:center; gap:6px; padding:8px 14px; border-radius:8px;
     font-size:13px; font-weight:600; cursor:pointer; border:none; transition:all 0.15s;
   }
-  .btn-primary { background:var(--primary); color:#fff; }
+  .btn-primary { background:var(--primary); color:#1E181C; font-weight:600; }
   .btn-primary:hover { background:var(--primary-dark); }
   .btn-outline { background:transparent; color:var(--primary); border:1.5px solid var(--border); }
   .btn-outline:hover { background:var(--primary-light); border-color:var(--primary); }

@@ -61,7 +61,7 @@ export default function ClientReportsView({ posts, metrics }: Props) {
           ['Iš viso įrašų', visible.length, 'var(--text)'],
         ].map(([l, v, c]) => (
           <div key={l as string} className="card" style={{ padding: 20 }}>
-            <div style={{ fontSize: 32, fontWeight: 800, color: c as string, fontFamily: 'Sora, sans-serif' }}>{v as number}</div>
+            <div style={{ fontSize: 32, fontWeight: 800, color: c as string, fontFamily: 'Neuething Sans, sans-serif' }}>{v as number}</div>
             <div style={{ fontSize: 12.5, color: 'var(--text-muted)', marginTop: 4 }}>{l}</div>
           </div>
         ))}

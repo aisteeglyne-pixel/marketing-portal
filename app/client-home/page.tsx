@@ -81,7 +81,7 @@ export default function ClientHomePage() {
   function showToast(msg: string) { setToast(msg); setTimeout(() => setToast(''), 2600) }
   function updatePost(updated: ContentPost) { setPosts(prev => prev.map(p => p.id === updated.id ? updated : p)) }
 
-  const accent = profile?.agency?.primary_color || '#6c63ff'
+  const accent = profile?.agency?.primary_color || '#FF68D8'
   const pending = posts.filter(p => p.status === 'review').length
 
   if (loading || !profile) return (

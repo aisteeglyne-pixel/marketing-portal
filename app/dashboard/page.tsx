@@ -191,8 +191,10 @@ export default function PortalPage() {
       {/* ===== SIDEBAR ===== */}
       <aside id="sidebar">
         <div className="sidebar-logo">
-          <div className="logo-mark">D</div>
-          <div className="logo-text">DAR <span>CONTENT</span></div>
+          <div className="logo-text" style={{ fontFamily: 'Neuething Sans, sans-serif', fontSize: 26, fontWeight: 800, lineHeight: 1 }}>
+            dar<span>.</span>
+            <span style={{ display: 'block', fontSize: 10, fontWeight: 600, letterSpacing: '0.18em', color: 'var(--text-sidebar)', textTransform: 'uppercase', marginTop: 3 }}>marketingo</span>
+          </div>
         </div>
         <nav className="sidebar-nav">
           <div className="nav-section">
