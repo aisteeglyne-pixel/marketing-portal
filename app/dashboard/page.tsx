@@ -23,7 +23,7 @@ import type { Client, ContentPost, Task, Project } from '@/types'
 type View = 'dashboard' | 'calendar' | 'posts' | 'approvals' | 'analytics' | 'team' | 'brand' | 'client' | 'admin' | 'projects' | 'chat'
 
 const VIEW_TITLES: Record<View, string> = {
-  dashboard: 'Dashboard',
+  dashboard: 'Apžvalga',
   calendar: 'Turinio kalendorius',
   posts: 'Visi įrašai',
   approvals: 'Tvirtinimas',
@@ -196,7 +196,7 @@ export default function PortalPage() {
         <nav className="sidebar-nav">
           <div className="nav-section">
             {[
-              { view: 'dashboard' as View, icon: '🏠', label: 'Dashboard' },
+              { view: 'dashboard' as View, icon: '🏠', label: 'Apžvalga' },
               { view: 'calendar'  as View, icon: '📅', label: 'Kalendorius' },
               { view: 'posts'     as View, icon: '📝', label: 'Įrašai' },
             ].map(item => (
@@ -277,7 +277,6 @@ export default function PortalPage() {
             {activeClient ? activeClient.company_name : VIEW_TITLES[activeView]}
           </div>
           <div className="topbar-actions">
-            <button className="btn btn-primary" onClick={() => setShowCreateModal(true)}>+ Naujas įrašas</button>
             <button className="btn btn-ghost" onClick={() => { supabase.auth.signOut(); router.push('/login') }}>Atsijungti</button>
           </div>
         </div>
