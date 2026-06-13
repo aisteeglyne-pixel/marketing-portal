@@ -81,7 +81,7 @@ export default function CalendarView({ posts, clientMap, onNewPost, onSelectPost
                 <div className="cal-day-num" style={{ fontSize: 12, fontWeight: isToday ? 800 : 500, color: isToday ? 'var(--primary)' : 'var(--text)', marginBottom: 4 }}>{day}</div>
                 {visible.map(post => {
                   const isStory = post.content_type === 'story'
-                  const pColor = isStory ? '#fa709a' : (PLATFORM_COLORS[post.platform] || '#6c63ff')
+                  const pColor = isStory ? '#fa709a' : (PLATFORM_COLORS[post.platform] || '#FF68D8')
                   const client = post.client_id ? clientMap[post.client_id] : null
                   return (
                     <div key={post.id} className={`cal-post${isStory ? ' is-story' : ''}`}

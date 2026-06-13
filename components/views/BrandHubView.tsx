@@ -22,7 +22,7 @@ export default function BrandHubView({ showToast }: BrandHubViewProps) {
   const [hashtags, setHashtags] = useState(['#rinkodara', '#turinys', '#socialiniaitinklai', '#lt'])
   const [newTag, setNewTag] = useState('')
   const [pillars, setPillars] = useState([
-    { emoji: '🎓', name: 'Mokomasis turinys', color: '#6c63ff', posts: 12 },
+    { emoji: '🎓', name: 'Mokomasis turinys', color: '#FF68D8', posts: 12 },
     { emoji: '🏆', name: 'Atvejai ir sėkmės istorijos', color: '#22C55E', posts: 8 },
     { emoji: '📦', name: 'Produkto pristatymas', color: '#F59E0B', posts: 15 },
     { emoji: '🤝', name: 'Komandinė kultūra', color: '#E1306C', posts: 5 },
@@ -62,7 +62,7 @@ export default function BrandHubView({ showToast }: BrandHubViewProps) {
         <div className="card">
           <div className="section-title">Brand spalvos</div>
           <div className="color-swatches">
-            {['#6c63ff','#FF6B6B','#1E181C','#f0f0f8','#22C55E'].map(c => (
+            {['#FF68D8','#FF6B6B','#1E181C','#F6EAF2','#22C55E'].map(c => (
               <div key={c} className="swatch" style={{ background: c, cursor: 'pointer' }} title={c} onClick={() => { navigator.clipboard?.writeText(c); showToast(`🎨 Nukopijuota: ${c}`) }} />
             ))}
             <div className="swatch add-swatch" style={{ cursor: 'pointer' }} onClick={() => showToast('🎨 Spalvų pridėjimas — netrukus')}>+</div>
@@ -100,7 +100,7 @@ export default function BrandHubView({ showToast }: BrandHubViewProps) {
           ))}
           <button className="btn btn-outline btn-sm" style={{ marginTop: 8 }} onClick={() => {
             const name = prompt('Naujo ramsčio pavadinimas:')
-            if (name) setPillars(prev => [...prev, { emoji: '📌', name, color: '#6c63ff', posts: 0 }])
+            if (name) setPillars(prev => [...prev, { emoji: '📌', name, color: '#FF68D8', posts: 0 }])
           }}>+ Pridėti ramstį</button>
         </div>
       </div>

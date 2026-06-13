@@ -243,7 +243,7 @@ export default function ChatView({ profile, clients, team, onUnreadChange }: Cha
     const deletable = c.client_id === null && c.name !== GENERAL_NAME
     return (
       <div onClick={() => openChannel(c.id)}
-        style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 16px', fontSize: 13, fontWeight: u ? 800 : 600, cursor: 'pointer', background: isActive ? 'var(--primary)' : undefined, color: isActive ? '#fff' : undefined }}>
+        style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 16px', fontSize: 13, fontWeight: u ? 800 : 600, cursor: 'pointer', background: isActive ? 'var(--primary)' : undefined, color: isActive ? '#1E181C' : undefined }}>
         {channelIcon(c)}
         <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</span>
         {deletable && isActive ? (

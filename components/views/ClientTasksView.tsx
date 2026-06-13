@@ -85,7 +85,7 @@ export default function ClientTasksView({ profile, tasks, onTaskCreated, showToa
                   <div style={{ fontSize: 13, fontWeight: 700, marginBottom: t.description ? 5 : 7, lineHeight: 1.35 }}>{t.title}</div>
                   {t.description && <div className="text-muted" style={{ fontSize: 11.5, marginBottom: 7, lineHeight: 1.4 }}>{t.description}</div>}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    {t.type === 'client_request' && <span style={{ fontSize: 10, fontWeight: 800, padding: '2px 7px', borderRadius: 8, background: '#EEF2FF', color: '#4338CA' }}>Mano prašymas</span>}
+                    {t.type === 'client_request' && <span style={{ fontSize: 10, fontWeight: 800, padding: '2px 7px', borderRadius: 8, background: '#FCE3F6', color: '#55111D' }}>Mano prašymas</span>}
                     <span style={{ width: 8, height: 8, borderRadius: '50%', background: PRIO[t.priority || 'medium'].color, marginLeft: 'auto' }} title={PRIO[t.priority || 'medium'].label} />
                     {t.due_date && <span className="text-muted" style={{ fontSize: 10.5 }}>📅 {fmtDate(t.due_date)}</span>}
                   </div>

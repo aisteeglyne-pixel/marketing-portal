@@ -18,8 +18,8 @@ const STATUS_META: Record<string, { label: string; bg: string; color: string }> 
   review:    { label: 'Tau peržiūrai', bg: '#FEF3C7', color: '#92400E' },
   approved:  { label: 'Patvirtinta', bg: '#EAF3DE', color: '#27500A' },
   rejected:  { label: 'Grąžinta',    bg: '#FCEBEB', color: '#791F1F' },
-  scheduled: { label: 'Suplanuota',  bg: '#EEF2FF', color: '#4338CA' },
-  published: { label: 'Paskelbta',   bg: '#EEF2FF', color: '#4338CA' },
+  scheduled: { label: 'Suplanuota',  bg: '#FCE3F6', color: '#55111D' },
+  published: { label: 'Paskelbta',   bg: '#FCE3F6', color: '#55111D' },
 }
 const PLATFORM_COLORS: Record<string, string> = {
   Instagram: '#E1306C', Facebook: '#1877F2', LinkedIn: '#0A66C2', TikTok: '#000000', X: '#14171A', YouTube: '#FF0000',

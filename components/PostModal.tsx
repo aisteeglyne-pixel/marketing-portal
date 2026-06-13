@@ -10,7 +10,7 @@ const STATUS_COLORS: Record<string, { bg: string; color: string }> = {
   review:    { bg: '#FEF3C7', color: '#92400E' },
   approved:  { bg: '#EAF3DE', color: '#27500A' },
   rejected:  { bg: '#FCEBEB', color: '#791F1F' },
-  published: { bg: '#EEF2FF', color: '#4338CA' },
+  published: { bg: '#FCE3F6', color: '#55111D' },
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -358,8 +358,8 @@ export default function PostModal({ post, clientId, role, onClose, onUpdate }: P
                   comments.map(c => (
                     <div key={c.id} style={{ display: 'flex', gap: 8 }}>
                       <div style={{
-                        width: 28, height: 28, borderRadius: '50%', background: '#EEF2FF',
-                        color: '#4338CA', fontSize: 11, fontWeight: 700,
+                        width: 28, height: 28, borderRadius: '50%', background: '#FCE3F6',
+                        color: '#55111D', fontSize: 11, fontWeight: 700,
                         display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                       }}>
                         {((c.author as any)?.full_name || (c.author as any)?.email || '?')[0].toUpperCase()}

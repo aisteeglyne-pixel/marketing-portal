@@ -11,7 +11,7 @@ const STATUS_COLORS: Record<string, string> = {
   review:    '#D97706',
   approved:  '#16A34A',
   rejected:  '#DC2626',
-  published: '#4F46E5',
+  published: '#55111D',
 }
 
 const PLATFORMS: { id: string; label: string; color: string; limit: number }[] = [
@@ -188,13 +188,13 @@ export default function ContentCalendar({ posts, clientId, agencyId, role, onPos
         {cells.map((day, i) => (
           <div key={i} style={{
             minHeight: 90, borderRadius: 8,
-            background: day ? (isToday(day) ? '#EEF2FF' : '#fafafa') : 'transparent',
-            border: day ? `1px solid ${isToday(day) ? '#C7D2FE' : '#f0f0f0'}` : 'none',
+            background: day ? (isToday(day) ? '#FCE3F6' : '#fafafa') : 'transparent',
+            border: day ? `1px solid ${isToday(day) ? '#E9C9E0' : '#f0f0f0'}` : 'none',
             padding: day ? '6px' : 0,
           }}>
             {day && (
               <>
-                <div style={{ fontSize: 12, fontWeight: isToday(day) ? 700 : 400, color: isToday(day) ? '#4338CA' : '#aaa', marginBottom: 4 }}>
+                <div style={{ fontSize: 12, fontWeight: isToday(day) ? 700 : 400, color: isToday(day) ? '#55111D' : '#aaa', marginBottom: 4 }}>
                   {day}
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -283,10 +283,10 @@ export default function ContentCalendar({ posts, clientId, agencyId, role, onPos
                     ] as const).map(t => (
                       <button key={t.id} type="button" onClick={() => setContentType(t.id)} style={{
                         flex: 1, padding: '9px 8px', borderRadius: 8,
-                        border: `2px solid ${contentType === t.id ? '#6c63ff' : '#e5e5e5'}`,
-                        background: contentType === t.id ? '#EEF2FF' : '#fff',
+                        border: `2px solid ${contentType === t.id ? '#FF68D8' : '#e5e5e5'}`,
+                        background: contentType === t.id ? '#FCE3F6' : '#fff',
                         cursor: 'pointer', fontSize: 12, fontWeight: 600,
-                        color: contentType === t.id ? '#4338CA' : '#888',
+                        color: contentType === t.id ? '#55111D' : '#888',
                         display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
                         transition: 'all 0.15s',
                       }}>
@@ -324,19 +324,19 @@ export default function ContentCalendar({ posts, clientId, agencyId, role, onPos
 
                 {/* 3. AI bar */}
                 <div style={{
-                  background: 'linear-gradient(135deg, #EEF2FF, #F5F3FF)',
-                  border: '1.5px solid #C7D2FE', borderRadius: 8,
+                  background: 'linear-gradient(135deg, #FCE3F6, #F5F3FF)',
+                  border: '1.5px solid #E9C9E0', borderRadius: 8,
                   padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 10,
                   marginBottom: 16, cursor: 'pointer',
                 }}
-                  onMouseEnter={e => (e.currentTarget.style.background = '#EEF2FF')}
-                  onMouseLeave={e => (e.currentTarget.style.background = 'linear-gradient(135deg, #EEF2FF, #F5F3FF)')}
+                  onMouseEnter={e => (e.currentTarget.style.background = '#FCE3F6')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'linear-gradient(135deg, #FCE3F6, #F5F3FF)')}
                 >
                   <span style={{ fontSize: 18 }}>✨</span>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: '#4338CA', flex: 1 }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: '#55111D', flex: 1 }}>
                     Generuoti su AI — parašyk geresnius tekstus per sekundes
                   </span>
-                  <span style={{ background: '#6c63ff', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 10 }}>AI</span>
+                  <span style={{ background: '#FF68D8', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 10 }}>AI</span>
                 </div>
 
                 {/* 4. Tekstas (caption) */}
@@ -370,9 +370,9 @@ export default function ContentCalendar({ posts, clientId, agencyId, role, onPos
                     onDrop={handleDrop}
                     onClick={() => !mediaPreview && mediaRef.current?.click()}
                     style={{
-                      border: `2px dashed ${dragOver ? '#6c63ff' : '#e0e0e0'}`,
+                      border: `2px dashed ${dragOver ? '#FF68D8' : '#e0e0e0'}`,
                       borderRadius: 10, overflow: 'hidden',
-                      background: dragOver ? '#EEF2FF' : '#fafafa',
+                      background: dragOver ? '#FCE3F6' : '#fafafa',
                       cursor: mediaPreview ? 'default' : 'pointer',
                       position: 'relative', transition: 'all 0.2s',
                     }}>
@@ -389,7 +389,7 @@ export default function ContentCalendar({ posts, clientId, agencyId, role, onPos
                     ) : (
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px 0', gap: 6, color: '#bbb' }}>
                         <span style={{ fontSize: 28 }}>🖼️</span>
-                        <span style={{ fontSize: 13, fontWeight: 600, color: '#6c63ff' }}>Įkelti nuotrauką ar vaizdo įrašą</span>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: '#FF68D8' }}>Įkelti nuotrauką ar vaizdo įrašą</span>
                         <span style={{ fontSize: 11 }}>Nutempk arba spustelėk · JPG, PNG, MP4 · Max 50MB</span>
                       </div>
                     )}
@@ -416,9 +416,9 @@ export default function ContentCalendar({ posts, clientId, agencyId, role, onPos
                     ] as const).map(w => (
                       <button key={w.val} type="button" onClick={() => setStatus(w.val)} style={{
                         padding: '8px 14px', borderRadius: 8,
-                        border: `2px solid ${status === w.val ? '#6c63ff' : '#e5e5e5'}`,
-                        background: status === w.val ? '#EEF2FF' : '#fff',
-                        color: status === w.val ? '#4338CA' : '#666',
+                        border: `2px solid ${status === w.val ? '#FF68D8' : '#e5e5e5'}`,
+                        background: status === w.val ? '#FCE3F6' : '#fff',
+                        color: status === w.val ? '#55111D' : '#666',
                         cursor: 'pointer', fontSize: 12, fontWeight: 600,
                         display: 'flex', alignItems: 'center', gap: 6,
                         transition: 'all 0.15s',

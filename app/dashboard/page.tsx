@@ -238,7 +238,7 @@ export default function PortalPage() {
                 <div key={client.id}
                   className={`client-list-item${activeClient?.id === client.id ? ' active' : ''}`}
                   onClick={() => openClient(client)}>
-                  <div className="client-dot" style={{ background: PLATFORM_COLORS[client.social_channels?.[0]] || '#6c63ff' }} />
+                  <div className="client-dot" style={{ background: PLATFORM_COLORS[client.social_channels?.[0]] || '#FF68D8' }} />
                   <span className="client-list-name">{client.company_name}</span>
                   {pending > 0 && <span className="client-pending">{pending}</span>}
                 </div>

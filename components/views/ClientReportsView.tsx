@@ -31,7 +31,7 @@ export default function ClientReportsView({ posts, metrics }: Props) {
   const [chartMetric, setChartMetric] = useState('followers')
 
   const scoped = metrics.filter(m => m.platform === selPlatform)
-  const platColor = PLATFORM_DEFS.find(p => p.id === selPlatform)?.color || '#6c63ff'
+  const platColor = PLATFORM_DEFS.find(p => p.id === selPlatform)?.color || '#FF68D8'
 
   function kpi(metric: string) {
     const pts = scoped.filter(s => s.metric === metric).sort((a, b) => a.metric_date.localeCompare(b.metric_date))

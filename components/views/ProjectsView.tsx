@@ -51,7 +51,7 @@ export default function ProjectsView({ profile, clients, team, projects, tasks, 
     ? tasks.filter(t => t.assigned_to === profile.id && t.type !== 'client_request')
     : tasks.filter(t => t.project_id === activeProjId)
 
-  const projColor = (p: Project) => p.client_id ? clientColor(clients.find(c => c.id === p.client_id)?.company_name || p.name) : (p.color || '#6c63ff')
+  const projColor = (p: Project) => p.client_id ? clientColor(clients.find(c => c.id === p.client_id)?.company_name || p.name) : (p.color || '#FF68D8')
 
   function pickProj(id: string) {
     setActiveProjId(id)
@@ -171,7 +171,7 @@ export default function ProjectsView({ profile, clients, team, projects, tasks, 
             </div>
           )}
           <div className={`nav-proj-item${isMy ? ' active' : ''}`} onClick={() => pickProj('my')}
-            style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', background: isMy ? 'var(--primary)' : undefined, color: isMy ? '#fff' : undefined }}>
+            style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', background: isMy ? 'var(--primary)' : undefined, color: isMy ? '#1E181C' : undefined }}>
             ⭐ Mano užduotys
           </div>
           {clientProjects.length > 0 && <div style={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1, color: 'var(--text-muted)', padding: '12px 16px 4px' }}>Klientai</div>}
@@ -180,7 +180,7 @@ export default function ProjectsView({ profile, clients, team, projects, tasks, 
             const open = tasks.filter(t => t.project_id === p.id && t.status !== 'done').length
             return (
               <div key={p.id} onClick={() => pickProj(p.id)}
-                style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', background: active ? 'var(--primary)' : undefined, color: active ? '#fff' : undefined }}>
+                style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', background: active ? 'var(--primary)' : undefined, color: active ? '#1E181C' : undefined }}>
                 <span style={{ width: 10, height: 10, borderRadius: 3, background: projColor(p), flexShrink: 0 }} />
                 <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</span>
                 {open > 0 && <span style={{ fontSize: 10.5, color: active ? 'rgba(255,255,255,0.8)' : 'var(--text-muted)' }}>{open}</span>}
@@ -193,8 +193,8 @@ export default function ProjectsView({ profile, clients, team, projects, tasks, 
             const open = tasks.filter(t => t.project_id === p.id && t.status !== 'done').length
             return (
               <div key={p.id} onClick={() => pickProj(p.id)}
-                style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', background: active ? 'var(--primary)' : undefined, color: active ? '#fff' : undefined }}>
-                <span style={{ width: 10, height: 10, borderRadius: 3, background: p.color || '#6c63ff', flexShrink: 0 }} />
+                style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', background: active ? 'var(--primary)' : undefined, color: active ? '#1E181C' : undefined }}>
+                <span style={{ width: 10, height: 10, borderRadius: 3, background: p.color || '#FF68D8', flexShrink: 0 }} />
                 <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</span>
                 {open > 0 && <span style={{ fontSize: 10.5, color: active ? 'rgba(255,255,255,0.8)' : 'var(--text-muted)' }}>{open}</span>}
               </div>
@@ -395,7 +395,7 @@ export default function ProjectsView({ profile, clients, team, projects, tasks, 
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                 {COLS.map(([cid, label]) => (
                   <span key={cid} onClick={() => setTaskModal(m => ({ ...m, status: cid }))}
-                    style={{ padding: '6px 12px', borderRadius: 16, fontSize: 12, fontWeight: 700, cursor: 'pointer', border: `1.5px solid ${taskModal.status === cid ? 'var(--primary)' : 'var(--border)'}`, background: taskModal.status === cid ? 'var(--primary)' : 'var(--surface)', color: taskModal.status === cid ? '#fff' : 'var(--text)' }}>{label}</span>
+                    style={{ padding: '6px 12px', borderRadius: 16, fontSize: 12, fontWeight: 700, cursor: 'pointer', border: `1.5px solid ${taskModal.status === cid ? 'var(--primary)' : 'var(--border)'}`, background: taskModal.status === cid ? 'var(--primary)' : 'var(--surface)', color: taskModal.status === cid ? '#1E181C' : 'var(--text)' }}>{label}</span>
                 ))}
               </div>
             </div>
