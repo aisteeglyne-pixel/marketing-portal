@@ -92,6 +92,23 @@ export interface Task {
   assignee?: Pick<Profile, 'id' | 'full_name' | 'email'>
 }
 
+export interface ChatChannel {
+  id: string
+  agency_id: string
+  client_id: string | null
+  name: string
+  is_dm: boolean
+  created_at: string
+}
+
+export interface ChatMessage {
+  id: string
+  channel_id: string
+  author_id: string | null
+  body: string
+  created_at: string
+}
+
 export interface FileRecord {
   id: string
   agency_id: string

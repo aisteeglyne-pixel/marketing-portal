@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import { PLATFORM_COLORS } from '@/lib/portal-constants'
@@ -17,9 +17,10 @@ import BrandHubView from '@/components/views/BrandHubView'
 import ClientWorkspaceView from '@/components/views/ClientWorkspaceView'
 import AdminView from '@/components/views/AdminView'
 import ProjectsView from '@/components/views/ProjectsView'
+import ChatView from '@/components/views/ChatView'
 import type { Client, ContentPost, Task, Project } from '@/types'
 
-type View = 'dashboard' | 'calendar' | 'posts' | 'approvals' | 'analytics' | 'team' | 'brand' | 'client' | 'admin' | 'projects'
+type View = 'dashboard' | 'calendar' | 'posts' | 'approvals' | 'analytics' | 'team' | 'brand' | 'client' | 'admin' | 'projects' | 'chat'
 
 const VIEW_TITLES: Record<View, string> = {
   dashboard: 'Dashboard',
@@ -32,6 +33,7 @@ const VIEW_TITLES: Record<View, string> = {
   client: '',
   admin: 'Admin valdymas',
   projects: 'Projektai',
+  chat: 'Komandos chatas',
 }
 
 export default function PortalPage() {
@@ -48,8 +50,11 @@ export default function PortalPage() {
   const [editingPost, setEditingPost] = useState<ContentPost | null>(null)
   const [selectedPost, setSelectedPost] = useState<ContentPost | null>(null)
   const [toast, setToast] = useState('')
+  const [chatUnread, setChatUnread] = useState(0)
   const router = useRouter()
   const supabase = createClient()
+  const activeViewRef = useRef<View>('dashboard')
+  useEffect(() => { activeViewRef.current = activeView }, [activeView])
 
   useEffect(() => {
     async function load() {
@@ -83,6 +88,41 @@ export default function PortalPage() {
     }
     load()
   }, [])
+
+  // Chato neperskaitytų badge sidebar'e (gyvas, kai esi ne chate)
+  useEffect(() => {
+    if (!profile) return
+    let cancelled = false
+    async function loadUnread() {
+      const { data: mems } = await supabase
+        .from('channel_members')
+        .select('channel_id, last_read_at')
+        .eq('profile_id', profile.id)
+      if (!mems || mems.length === 0) return
+      let total = 0
+      await Promise.all(mems.map(async m => {
+        const { count } = await supabase
+          .from('messages')
+          .select('*', { count: 'exact', head: true })
+          .eq('channel_id', m.channel_id)
+          .gt('created_at', m.last_read_at || '1970-01-01')
+          .neq('author_id', profile.id)
+        total += count || 0
+      }))
+      if (!cancelled) setChatUnread(total)
+    }
+    loadUnread()
+    const sub = supabase
+      .channel('sidebar-chat')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
+        const m = payload.new as { author_id: string | null }
+        if (m.author_id !== profile.id && activeViewRef.current !== 'chat') {
+          setChatUnread(n => n + 1)
+        }
+      })
+      .subscribe()
+    return () => { cancelled = true; supabase.removeChannel(sub) }
+  }, [profile])
 
   const clientMap = Object.fromEntries(clients.map(c => [c.id, c]))
   const pendingPosts = posts.filter(p => p.status === 'review')
@@ -172,6 +212,10 @@ export default function PortalPage() {
               <span className="nav-icon">📋</span> Projektai
               {tasks.filter(t => t.assigned_to === profile?.id && t.status !== 'done' && t.type !== 'client_request').length > 0 &&
                 <span className="nav-badge">{tasks.filter(t => t.assigned_to === profile?.id && t.status !== 'done' && t.type !== 'client_request').length}</span>}
+            </div>
+            <div className={`nav-item${activeView === 'chat' && !activeClient ? ' active' : ''}`} onClick={() => navTo('chat')}>
+              <span className="nav-icon">💬</span> Chatas
+              {chatUnread > 0 && <span className="nav-badge">{chatUnread}</span>}
             </div>
           </div>
           <div className="nav-section">
@@ -282,6 +326,12 @@ export default function PortalPage() {
               onTaskUpdated={t => setTasks(prev => prev.map(x => x.id === t.id ? t : x))}
               onTaskDeleted={id => setTasks(prev => prev.filter(x => x.id !== id))}
               showToast={showToast}
+            />
+          )}
+          {activeView === 'chat' && !activeClient && (
+            <ChatView
+              profile={profile} clients={clients} team={team}
+              onUnreadChange={setChatUnread}
             />
           )}
           {activeView === 'admin' && !activeClient && (
