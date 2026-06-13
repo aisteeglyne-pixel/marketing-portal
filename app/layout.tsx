@@ -9,7 +9,7 @@ const workSans = Work_Sans({
 })
 
 export const metadata: Metadata = {
-  title: 'DAR CONTENT — Marketing Portal',
+  title: 'dar.om — Marketingo portalas',
   description: 'Klientų turinio valdymo platforma',
 }
 

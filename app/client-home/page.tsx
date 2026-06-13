@@ -105,10 +105,9 @@ export default function ClientHomePage() {
           {agencyLogo ? (
             <img src={agencyLogo} alt={agencyName} style={{ height: 30, maxWidth: 150, objectFit: 'contain' }} />
           ) : (
-            <>
-              <div className="logo-mark" style={{ background: accent }}>{agencyName[0]}</div>
-              <div className="logo-text">{agencyName}</div>
-            </>
+            <div className="logo-text" style={{ fontFamily: 'Neuething Sans, sans-serif', fontSize: 28, fontWeight: 800, lineHeight: 1, letterSpacing: '-0.01em' }}>
+              dar<span style={{ color: 'var(--primary)' }}>.</span>om
+            </div>
           )}
         </div>
         <nav className="sidebar-nav">
