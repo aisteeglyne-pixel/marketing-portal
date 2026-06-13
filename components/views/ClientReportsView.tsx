@@ -47,8 +47,9 @@ export default function ClientReportsView({ posts, metrics }: Props) {
     .sort((a, b) => a.metric_date.localeCompare(b.metric_date))
     .map(s => ({ date: s.metric_date, value: s.value }))
 
-  const published = posts.filter(p => p.status === 'published')
-  const approved = posts.filter(p => p.status === 'approved')
+  const visible = posts.filter(p => p.status !== 'draft')
+  const published = visible.filter(p => p.status === 'published')
+  const approved = visible.filter(p => p.status === 'approved')
 
   return (
     <div className="view active">
@@ -57,7 +58,7 @@ export default function ClientReportsView({ posts, metrics }: Props) {
         {[
           ['Paskelbta įrašų', published.length, 'var(--primary)'],
           ['Patvirtinta', approved.length, '#10B981'],
-          ['Iš viso įrašų', posts.length, 'var(--text)'],
+          ['Iš viso įrašų', visible.length, 'var(--text)'],
         ].map(([l, v, c]) => (
           <div key={l as string} className="card" style={{ padding: 20 }}>
             <div style={{ fontSize: 32, fontWeight: 800, color: c as string, fontFamily: 'Sora, sans-serif' }}>{v as number}</div>

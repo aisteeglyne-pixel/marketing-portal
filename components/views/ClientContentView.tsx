@@ -29,8 +29,10 @@ export default function ClientContentView({ clientId, agencyId, posts, onPostsCh
   const [mode, setMode] = useState<'pending' | 'calendar' | 'all'>('pending')
   const [selectedPost, setSelectedPost] = useState<ContentPost | null>(null)
 
+  // Klientui nerodome agentūros juodraščių
+  const visiblePosts = posts.filter(p => p.status !== 'draft')
   const pending = posts.filter(p => p.status === 'review')
-  const listPosts = mode === 'pending' ? pending : posts
+  const listPosts = mode === 'pending' ? pending : visiblePosts
 
   function updatePost(updated: ContentPost) {
     onPostsChange(posts.map(p => p.id === updated.id ? updated : p))
@@ -53,7 +55,7 @@ export default function ClientContentView({ clientId, agencyId, posts, onPostsCh
 
       {mode === 'calendar' ? (
         <div className="card" style={{ padding: 18 }}>
-          <ContentCalendar posts={posts} clientId={clientId} agencyId={agencyId} role="client" onPostsChange={onPostsChange} />
+          <ContentCalendar posts={visiblePosts} clientId={clientId} agencyId={agencyId} role="client" onPostsChange={onPostsChange} />
         </div>
       ) : listPosts.length === 0 ? (
         <div className="card" style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>
