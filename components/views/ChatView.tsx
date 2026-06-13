@@ -26,6 +26,7 @@ export default function ChatView({ profile, clients, team, onUnreadChange }: Cha
   const [sending, setSending] = useState(false)
   const [showNewChan, setShowNewChan] = useState(false)
   const [ncName, setNcName] = useState('')
+  const [hoverMsg, setHoverMsg] = useState<string | null>(null)
 
   const activeIdRef = useRef<string | null>(null)
   const channelsRef = useRef<ChatChannel[]>([])
@@ -133,6 +134,10 @@ export default function ChatView({ profile, clients, team, onUnreadChange }: Cha
           setUnread(prev => ({ ...prev, [m.channel_id]: (prev[m.channel_id] || 0) + 1 }))
         }
       })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'messages' }, payload => {
+        const old = payload.old as { id: string }
+        setMessages(prev => prev.filter(x => x.id !== old.id))
+      })
       .subscribe()
     return () => { supabase.removeChannel(sub) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -194,6 +199,26 @@ export default function ChatView({ profile, clients, team, onUnreadChange }: Cha
     openChannel(data.id)
   }
 
+  async function deleteChannel(c: ChatChannel) {
+    if (!confirm(`Ištrinti kanalą „${c.name}" su visomis žinutėmis? Atšaukti negalima.`)) return
+    const { error } = await supabase.from('channels').delete().eq('id', c.id)
+    if (error) return
+    const remaining = channels.filter(x => x.id !== c.id)
+    setChannels(remaining)
+    if (activeId === c.id) {
+      const next = remaining.find(x => x.client_id === null) || remaining[0] || null
+      if (next) openChannel(next.id)
+      else { setActiveId(null); setMessages([]) }
+    }
+  }
+
+  async function deleteMessage(id: string) {
+    if (!confirm('Ištrinti šią žinutę?')) return
+    const { error } = await supabase.from('messages').delete().eq('id', id)
+    if (error) return
+    setMessages(prev => prev.filter(x => x.id !== id))
+  }
+
   const authorName = (id?: string | null) => {
     if (!id) return 'Nežinomas'
     const m = team.find(x => x.id === id)
@@ -215,14 +240,17 @@ export default function ChatView({ profile, clients, team, onUnreadChange }: Cha
     const isActive = activeId === c.id
     const u = unread[c.id] || 0
     const label = c.client_id === null ? c.name.replace(/^#/, '') : c.name
+    const deletable = c.client_id === null && c.name !== GENERAL_NAME
     return (
       <div onClick={() => openChannel(c.id)}
         style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 16px', fontSize: 13, fontWeight: u ? 800 : 600, cursor: 'pointer', background: isActive ? 'var(--primary)' : undefined, color: isActive ? '#fff' : undefined }}>
         {channelIcon(c)}
         <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</span>
-        {u > 0 && (
+        {deletable && isActive ? (
+          <span onClick={e => { e.stopPropagation(); deleteChannel(c) }} title="Ištrinti kanalą" style={{ cursor: 'pointer', fontSize: 13 }}>🗑</span>
+        ) : u > 0 ? (
           <span style={{ fontSize: 11, fontWeight: 800, minWidth: 18, textAlign: 'center', padding: '1px 6px', borderRadius: 10, background: isActive ? 'rgba(255,255,255,0.25)' : 'var(--primary)', color: '#fff' }}>{u}</span>
-        )}
+        ) : null}
       </div>
     )
   }
@@ -282,7 +310,10 @@ export default function ChatView({ profile, clients, team, onUnreadChange }: Cha
               const grouped = prev && prev.author_id === m.author_id && (new Date(m.created_at).getTime() - new Date(prev.created_at).getTime() < 5 * 60 * 1000)
               const mine = m.author_id === profile.id
               return (
-                <div key={m.id} style={{ display: 'flex', gap: 10, marginTop: grouped ? -8 : 0 }}>
+                <div key={m.id}
+                  onMouseEnter={() => setHoverMsg(m.id)}
+                  onMouseLeave={() => setHoverMsg(prev => prev === m.id ? null : prev)}
+                  style={{ display: 'flex', gap: 10, marginTop: grouped ? -8 : 0, alignItems: 'flex-start' }}>
                   <div style={{ width: 34, flexShrink: 0 }}>
                     {!grouped && (
                       <span style={{ width: 34, height: 34, borderRadius: '50%', background: clientColor(authorName(m.author_id)), color: '#fff', fontWeight: 900, fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -298,6 +329,11 @@ export default function ChatView({ profile, clients, team, onUnreadChange }: Cha
                       </div>
                     )}
                     <div style={{ fontSize: 13.5, lineHeight: 1.5, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{m.body}</div>
+                  </div>
+                  <div style={{ width: 20, flexShrink: 0, paddingTop: grouped ? 0 : 20 }}>
+                    {mine && hoverMsg === m.id && (
+                      <span onClick={() => deleteMessage(m.id)} title="Ištrinti žinutę" style={{ cursor: 'pointer', fontSize: 12, opacity: 0.55 }}>🗑</span>
+                    )}
                   </div>
                 </div>
               )

@@ -309,7 +309,7 @@ export default function PortalPage() {
             />
           )}
           {activeView === 'analytics' && !activeClient && (
-            <AnalyticsView posts={posts} clients={clients} onOpenClient={openClient} />
+            <AnalyticsView profile={profile} posts={posts} clients={clients} onOpenClient={openClient} />
           )}
           {activeView === 'team' && !activeClient && (
             <TeamView team={team} clients={clients} tasks={tasks} showToast={showToast} />
