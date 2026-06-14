@@ -92,6 +92,19 @@ export interface Task {
   assignee?: Pick<Profile, 'id' | 'full_name' | 'email'>
 }
 
+export interface Subtask {
+  id: string
+  agency_id: string
+  task_id: string
+  title: string
+  is_done: boolean
+  assigned_to: string | null
+  due_date: string | null
+  sort_order: number
+  created_by: string | null
+  created_at: string
+}
+
 export interface ChatChannel {
   id: string
   agency_id: string

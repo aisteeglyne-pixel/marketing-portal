@@ -18,7 +18,7 @@ import ClientWorkspaceView from '@/components/views/ClientWorkspaceView'
 import AdminView from '@/components/views/AdminView'
 import ProjectsView from '@/components/views/ProjectsView'
 import ChatView from '@/components/views/ChatView'
-import type { Client, ContentPost, Task, Project } from '@/types'
+import type { Client, ContentPost, Task, Project, FileRecord } from '@/types'
 
 type View = 'dashboard' | 'calendar' | 'posts' | 'approvals' | 'analytics' | 'team' | 'brand' | 'client' | 'admin' | 'projects' | 'chat'
 
@@ -43,6 +43,7 @@ export default function PortalPage() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [team, setTeam] = useState<any[]>([])
   const [projects, setProjects] = useState<Project[]>([])
+  const [files, setFiles] = useState<FileRecord[]>([])
   const [activeView, setActiveView] = useState<View>('dashboard')
   const [activeClient, setActiveClient] = useState<Client | null>(null)
   const [loading, setLoading] = useState(true)
@@ -72,18 +73,21 @@ export default function PortalPage() {
         { data: tasksData },
         { data: teamData },
         { data: projectsData },
+        { data: filesData },
       ] = await Promise.all([
         supabase.from('clients').select('*').eq('agency_id', p.agency_id).order('company_name'),
         supabase.from('content_posts').select('*').eq('agency_id', p.agency_id).order('created_at', { ascending: false }),
         supabase.from('tasks').select('*').eq('agency_id', p.agency_id).order('created_at', { ascending: false }),
         supabase.from('profiles').select('*').eq('agency_id', p.agency_id),
         supabase.from('projects').select('*').eq('agency_id', p.agency_id).eq('status', 'active').order('created_at'),
+        supabase.from('files').select('*').eq('agency_id', p.agency_id).order('uploaded_date', { ascending: false }),
       ])
       setClients(clientsData || [])
       setPosts(postsData || [])
       setTasks(tasksData || [])
       setTeam(teamData || [])
       setProjects(projectsData || [])
+      setFiles(filesData || [])
       setLoading(false)
     }
     load()
@@ -317,7 +321,7 @@ export default function PortalPage() {
           )}
           {activeView === 'projects' && !activeClient && (
             <ProjectsView
-              profile={profile} clients={clients} team={team} projects={projects} tasks={tasks}
+              profile={profile} clients={clients} team={team} projects={projects} tasks={tasks} files={files}
               onProjectCreated={p => setProjects(prev => [...prev, p])}
               onProjectUpdated={p => setProjects(prev => prev.map(x => x.id === p.id ? p : x))}
               onTaskCreated={t => setTasks(prev => [t, ...prev])}
