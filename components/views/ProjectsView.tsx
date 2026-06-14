@@ -499,7 +499,7 @@ export default function ProjectsView({ profile, clients, team, projects, tasks, 
                         <span style={{ fontSize: 12, fontWeight: 600, color: late ? '#DC2626' : 'var(--text-muted)' }}>{t.due_date ? fmtDate(t.due_date) : '—'}</span>
                         <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
                           <span style={{ width: 8, height: 8, borderRadius: '50%', background: PRIO_COLORS[t.priority || 'medium'] }} />
-                          {PRIO_LABELS[t.priority || 'medium'].replace(/^.\s/, '')}
+                          {PRIO_LABELS[t.priority || 'medium'].replace(/^\S+\s*/, '')}
                         </span>
                         <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)' }}>{stLabel}</span>
                       </div>
