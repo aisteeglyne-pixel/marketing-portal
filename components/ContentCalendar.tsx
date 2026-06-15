@@ -28,10 +28,11 @@ interface ContentCalendarProps {
   clientId: string
   agencyId?: string
   role: 'agency_admin' | 'client'
+  preview?: boolean
   onPostsChange: (posts: ContentPost[]) => void
 }
 
-export default function ContentCalendar({ posts, clientId, agencyId, role, onPostsChange }: ContentCalendarProps) {
+export default function ContentCalendar({ posts, clientId, agencyId, role, preview = false, onPostsChange }: ContentCalendarProps) {
   const today = new Date()
   const [year, setYear] = useState(today.getFullYear())
   const [month, setMonth] = useState(today.getMonth())
@@ -243,7 +244,7 @@ export default function ContentCalendar({ posts, clientId, agencyId, role, onPos
 
       {/* Esamo įrašo modalas */}
       {selectedPost && (
-        <PostModal post={selectedPost} clientId={clientId} role={role} onClose={() => setSelectedPost(null)} onUpdate={handlePostUpdate} />
+        <PostModal post={selectedPost} clientId={clientId} role={role} preview={preview} onClose={() => setSelectedPost(null)} onUpdate={handlePostUpdate} />
       )}
 
       {/* ── NAUJO ĮRAŠO MODALAS (DAR Content stilius) ── */}

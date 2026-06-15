@@ -35,6 +35,7 @@ export default function ClientHomePage() {
   const [goals, setGoals] = useState<Goal[]>([])
   const [metrics, setMetrics] = useState<any[]>([])
   const [activeView, setActiveView] = useState<View>('overview')
+  const [preview, setPreview] = useState(false)
   const [loading, setLoading] = useState(true)
   const [selectedPost, setSelectedPost] = useState<ContentPost | null>(null)
   const [toast, setToast] = useState('')
@@ -48,10 +49,18 @@ export default function ClientHomePage() {
       if (!user) { router.push('/login'); return }
       const { data: p } = await supabase.from('profiles').select('*, agency:agencies(*)').eq('id', user.id).single()
       if (!p) { router.push('/login'); return }
-      if (p.role === 'agency_admin') { router.push('/dashboard'); return }
-      setProfile(p)
 
-      const cid = p.client_id
+      // Admino peržiūros režimas: /client-home?preview=<clientId>
+      const previewId = typeof window !== 'undefined'
+        ? new URLSearchParams(window.location.search).get('preview')
+        : null
+      const isPreview = p.role === 'agency_admin' && !!previewId
+      if (p.role === 'agency_admin' && !isPreview) { router.push('/dashboard'); return }
+      setPreview(isPreview)
+
+      // Peržiūroje vaizdai dirba su pasirinkto kliento client_id (admino sesija mato visus agentūros klientus per RLS)
+      const cid = isPreview ? previewId! : p.client_id
+      setProfile(isPreview ? { ...p, client_id: cid } : p)
       const [
         { data: clientData },
         { data: postsData },
@@ -125,8 +134,8 @@ export default function ClientHomePage() {
               <div className="user-name">{client?.company_name || profile.full_name || profile.email}</div>
               <div className="user-role">Klientas · {agencyName}</div>
             </div>
-            <span style={{ color: 'var(--text-sidebar)', fontSize: 14, cursor: 'pointer' }} title="Atsijungti"
-              onClick={() => { supabase.auth.signOut(); router.push('/login') }}>↩</span>
+            <span style={{ color: 'var(--text-sidebar)', fontSize: 14, cursor: 'pointer' }} title={preview ? 'Grįžti į admin' : 'Atsijungti'}
+              onClick={() => { if (preview) { router.push('/dashboard') } else { supabase.auth.signOut(); router.push('/login') } }}>↩</span>
           </div>
         </div>
       </aside>
@@ -136,9 +145,20 @@ export default function ClientHomePage() {
         <div className="topbar">
           <div className="topbar-title">{VIEW_TITLES[activeView]}</div>
           <div className="topbar-actions">
-            <button className="btn btn-ghost" onClick={() => { supabase.auth.signOut(); router.push('/login') }}>Atsijungti</button>
+            {preview ? (
+              <button className="btn btn-ghost" onClick={() => router.push('/dashboard')}>← Grįžti į admin</button>
+            ) : (
+              <button className="btn btn-ghost" onClick={() => { supabase.auth.signOut(); router.push('/login') }}>Atsijungti</button>
+            )}
           </div>
         </div>
+
+        {preview && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 24px', background: 'var(--primary)', color: '#fff', fontSize: 13, fontWeight: 600 }}>
+            <span>👁️ Peržiūros režimas — matai tiksliai, ką mato klientas <strong>{client?.company_name || ''}</strong>. Rašymas išjungtas.</span>
+            <button className="btn btn-sm" style={{ marginLeft: 'auto', background: '#fff', color: 'var(--primary)', fontWeight: 700 }} onClick={() => router.push('/dashboard')}>Uždaryti peržiūrą</button>
+          </div>
+        )}
 
         <div className="view-container" style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
           {activeView === 'overview' && (
@@ -146,13 +166,13 @@ export default function ClientHomePage() {
               onNav={v => setActiveView(v)} onSelectPost={setSelectedPost} />
           )}
           {activeView === 'content' && (
-            <ClientContentView clientId={profile.client_id} agencyId={profile.agency_id} posts={posts} onPostsChange={setPosts} />
+            <ClientContentView clientId={profile.client_id} agencyId={profile.agency_id} posts={posts} preview={preview} onPostsChange={setPosts} />
           )}
           {activeView === 'tasks' && (
-            <ClientTasksView profile={profile} tasks={tasks} onTaskCreated={t => setTasks(prev => [t, ...prev])} showToast={showToast} />
+            <ClientTasksView profile={profile} tasks={tasks} preview={preview} onTaskCreated={t => setTasks(prev => [t, ...prev])} showToast={showToast} />
           )}
           {activeView === 'files' && (
-            <ClientFilesView profile={profile} files={files} onFilesChange={setFiles} showToast={showToast} />
+            <ClientFilesView profile={profile} files={files} preview={preview} onFilesChange={setFiles} showToast={showToast} />
           )}
           {activeView === 'goals' && <ClientGoalsView goals={goals} />}
           {activeView === 'reports' && <ClientReportsView posts={posts} metrics={metrics} />}
@@ -165,6 +185,7 @@ export default function ClientHomePage() {
           post={selectedPost}
           clientId={selectedPost.client_id}
           role="client"
+          preview={preview}
           onClose={() => setSelectedPost(null)}
           onUpdate={updated => { updatePost(updated); setSelectedPost(updated) }}
         />

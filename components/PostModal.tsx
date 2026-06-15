@@ -33,11 +33,12 @@ interface PostModalProps {
   post: ContentPost
   clientId: string
   role: 'agency_admin' | 'client'
+  preview?: boolean
   onClose: () => void
   onUpdate: (updatedPost: ContentPost) => void
 }
 
-export default function PostModal({ post, clientId, role, onClose, onUpdate }: PostModalProps) {
+export default function PostModal({ post, clientId, role, preview = false, onClose, onUpdate }: PostModalProps) {
   const supabase = createClient()
   const [comments, setComments] = useState<Comment[]>([])
   const [commentText, setCommentText] = useState('')
@@ -235,7 +236,7 @@ export default function PostModal({ post, clientId, role, onClose, onUpdate }: P
           <div style={{ flex: '0 0 45%', overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
 
             {/* Kliento patvirtinimas */}
-            {role === 'client' && currentStatus === 'review' && (
+            {role === 'client' && currentStatus === 'review' && !preview && (
               <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid #f0f0f0' }}>
                 <div style={{ fontSize: 11, fontWeight: 600, color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 10 }}>
                   Tavo sprendimas
@@ -370,23 +371,29 @@ export default function PostModal({ post, clientId, role, onClose, onUpdate }: P
                 )}
               </div>
 
-              <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
-                <textarea
-                  value={commentText}
-                  rows={2}
-                  onChange={e => setCommentText(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) submitComment() }}
-                  placeholder="Rašyti komentarą… (⌘/Ctrl+Enter — siųsti)"
-                  style={{ flex: 1, padding: '8px 12px', border: '1px solid #e5e5e5', borderRadius: 8, fontSize: 13, outline: 'none', resize: 'vertical', fontFamily: 'inherit' }}
-                />
-                <button
-                  onClick={submitComment}
-                  aria-label="Siųsti komentarą"
-                  disabled={submittingComment || !commentText.trim()}
-                  style={{ padding: '8px 14px', borderRadius: 8, border: 'none', background: 'var(--primary)', color: '#fff', fontSize: 13, cursor: 'pointer' }}>
-                  ↑
-                </button>
-              </div>
+              {preview ? (
+                <div style={{ fontSize: 12, color: '#aaa', fontStyle: 'italic', padding: '8px 0' }}>
+                  👁️ Peržiūros režimas — komentavimas išjungtas
+                </div>
+              ) : (
+                <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
+                  <textarea
+                    value={commentText}
+                    rows={2}
+                    onChange={e => setCommentText(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) submitComment() }}
+                    placeholder="Rašyti komentarą… (⌘/Ctrl+Enter — siųsti)"
+                    style={{ flex: 1, padding: '8px 12px', border: '1px solid #e5e5e5', borderRadius: 8, fontSize: 13, outline: 'none', resize: 'vertical', fontFamily: 'inherit' }}
+                  />
+                  <button
+                    onClick={submitComment}
+                    aria-label="Siųsti komentarą"
+                    disabled={submittingComment || !commentText.trim()}
+                    style={{ padding: '8px 14px', borderRadius: 8, border: 'none', background: 'var(--primary)', color: '#fff', fontSize: 13, cursor: 'pointer' }}>
+                    ↑
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>

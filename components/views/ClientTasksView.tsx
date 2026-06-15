@@ -8,6 +8,7 @@ import type { Task } from '@/types'
 interface Props {
   profile: any
   tasks: Task[]
+  preview?: boolean
   onTaskCreated: (t: Task) => void
   showToast: (msg: string) => void
 }
@@ -24,7 +25,7 @@ const PRIO: Record<string, { label: string; color: string }> = {
   low: { label: 'Žemas', color: '#22C55E' },
 }
 
-export default function ClientTasksView({ profile, tasks, onTaskCreated, showToast }: Props) {
+export default function ClientTasksView({ profile, tasks, preview = false, onTaskCreated, showToast }: Props) {
   const supabase = createClient()
   const [showForm, setShowForm] = useState(false)
   const [title, setTitle] = useState('')
@@ -55,10 +56,10 @@ export default function ClientTasksView({ profile, tasks, onTaskCreated, showToa
     <div className="view active">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <div className="text-muted" style={{ fontSize: 13 }}>Tavo prašymai agentūrai ir jų eiga</div>
-        <button className="btn btn-primary" onClick={() => setShowForm(v => !v)}>+ Naujas prašymas</button>
+        {!preview && <button className="btn btn-primary" onClick={() => setShowForm(v => !v)}>+ Naujas prašymas</button>}
       </div>
 
-      {showForm && (
+      {!preview && showForm && (
         <div className="card" style={{ padding: 18, marginBottom: 16 }}>
           <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 10 }}>Naujas prašymas</div>
           <input className="form-input" placeholder="Ko reikia? Pvz. Reels apie naują produktą" value={title}

@@ -10,6 +10,7 @@ interface Props {
   clientId: string
   agencyId: string
   posts: ContentPost[]
+  preview?: boolean
   onPostsChange: (posts: ContentPost[]) => void
 }
 
@@ -25,7 +26,7 @@ const PLATFORM_COLORS: Record<string, string> = {
   Instagram: '#E1306C', Facebook: '#1877F2', LinkedIn: '#0A66C2', TikTok: '#000000', X: '#14171A', YouTube: '#FF0000',
 }
 
-export default function ClientContentView({ clientId, agencyId, posts, onPostsChange }: Props) {
+export default function ClientContentView({ clientId, agencyId, posts, preview = false, onPostsChange }: Props) {
   const [mode, setMode] = useState<'pending' | 'calendar' | 'all'>('pending')
   const [selectedPost, setSelectedPost] = useState<ContentPost | null>(null)
 
@@ -55,7 +56,7 @@ export default function ClientContentView({ clientId, agencyId, posts, onPostsCh
 
       {mode === 'calendar' ? (
         <div className="card" style={{ padding: 18 }}>
-          <ContentCalendar posts={visiblePosts} clientId={clientId} agencyId={agencyId} role="client" onPostsChange={onPostsChange} />
+          <ContentCalendar posts={visiblePosts} clientId={clientId} agencyId={agencyId} role="client" preview={preview} onPostsChange={onPostsChange} />
         </div>
       ) : listPosts.length === 0 ? (
         <div className="card" style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>
@@ -91,6 +92,7 @@ export default function ClientContentView({ clientId, agencyId, posts, onPostsCh
           post={selectedPost}
           clientId={clientId}
           role="client"
+          preview={preview}
           onClose={() => setSelectedPost(null)}
           onUpdate={updated => { updatePost(updated); setSelectedPost(updated) }}
         />

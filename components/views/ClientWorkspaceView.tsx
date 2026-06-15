@@ -189,7 +189,7 @@ export default function ClientWorkspaceView({ client, posts, tasks, team, onNewP
           <div style={{ fontSize: 13, fontWeight: 700 }}>Simuliuoti kliento vaizdą</div>
           <div className="text-muted" style={{ fontSize: 12 }}>Pamatyk tiksliai, ką mato klientas prisijungęs — tik jo turinį</div>
         </div>
-        <button className="btn btn-primary btn-sm" onClick={() => showToast('👁️ Kliento režimo simuliacija — netrukus')}>👁️ Simuliuoti {client.company_name}</button>
+        <button className="btn btn-primary btn-sm" onClick={() => window.open(`/client-home?preview=${client.id}`, '_blank')}>👁️ Simuliuoti {client.company_name}</button>
       </div>
     </div>
   )

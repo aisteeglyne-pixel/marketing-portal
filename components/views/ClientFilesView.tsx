@@ -7,6 +7,7 @@ import type { FileRecord } from '@/types'
 interface Props {
   profile: any
   files: FileRecord[]
+  preview?: boolean
   onFilesChange: (files: FileRecord[]) => void
   showToast: (msg: string) => void
 }
@@ -14,7 +15,7 @@ interface Props {
 const FILE_ICONS: Record<string, string> = { video: '🎬', photo: '🖼️', doc: '📄', brand: '🎨' }
 const TYPE_LABELS: Record<string, string> = { video: 'Video', photo: 'Nuotrauka', doc: 'Dokumentas', brand: 'Brandas' }
 
-export default function ClientFilesView({ profile, files, onFilesChange, showToast }: Props) {
+export default function ClientFilesView({ profile, files, preview = false, onFilesChange, showToast }: Props) {
   const supabase = createClient()
   const [uploading, setUploading] = useState(false)
   const [folder, setFolder] = useState('')
@@ -58,13 +59,15 @@ export default function ClientFilesView({ profile, files, onFilesChange, showToa
     <div className="view active">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, gap: 10, flexWrap: 'wrap' }}>
         <div className="text-muted" style={{ fontSize: 13 }}>Bendri failai su agentūra</div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <select className="select-box" value={folder} onChange={e => setFolder(e.target.value)} style={{ fontSize: 13 }}>
-            <option value="">Be aplanko</option>
-            {existingFolders.map(f => <option key={f} value={f}>{f}</option>)}
-          </select>
-          <button className="btn btn-primary" disabled={uploading} onClick={() => fileRef.current?.click()}>{uploading ? '⏳ Keliama...' : '⬆️ Įkelti failus'}</button>
-        </div>
+        {!preview && (
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <select className="select-box" value={folder} onChange={e => setFolder(e.target.value)} style={{ fontSize: 13 }}>
+              <option value="">Be aplanko</option>
+              {existingFolders.map(f => <option key={f} value={f}>{f}</option>)}
+            </select>
+            <button className="btn btn-primary" disabled={uploading} onClick={() => fileRef.current?.click()}>{uploading ? '⏳ Keliama...' : '⬆️ Įkelti failus'}</button>
+          </div>
+        )}
       </div>
       <input ref={fileRef} type="file" multiple onChange={handleUpload} style={{ display: 'none' }} />
 
