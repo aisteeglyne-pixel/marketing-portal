@@ -118,7 +118,17 @@ export interface ChatMessage {
   id: string
   channel_id: string
   author_id: string | null
-  body: string
+  body: string | null
+  image_url: string | null
+  parent_id: string | null
+  created_at: string
+}
+
+export interface MessageReaction {
+  id: string
+  message_id: string
+  profile_id: string
+  emoji: string
   created_at: string
 }
 
