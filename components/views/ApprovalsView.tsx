@@ -138,18 +138,18 @@ export default function ApprovalsView({ posts, clientMap, onSelectPost, onApprov
                           <div style={{ fontSize: 11, color: '#059669' }}>Paruošta skelbimui</div>
                         </div>
                       </div>
-                      <button className="btn btn-primary btn-sm" onClick={() => onSchedule(post)}>🚀 Suplanuoti</button>
+                      <button className="btn btn-primary btn-sm" onClick={() => onSchedule(post)}>Suplanuoti</button>
                     </div>
                   ) : approvalTab !== 'done' ? (
                     <div className="approval-actions">
-                      <button className="btn btn-success btn-sm" onClick={() => onApprove(post.id)}>✓ Patvirtinti</button>
-                      <button className="btn btn-warning btn-sm" onClick={() => onNeedsChanges(post.id)}>↩ Reikia pataisymų</button>
-                      <button className="btn btn-outline btn-sm" onClick={() => onSelectPost(post)}>👁 Peržiūrėti</button>
-                      <button className="btn btn-outline btn-sm" onClick={() => onDuplicate(post)}>📋 Dublikuoti</button>
+                      <button className="btn btn-success btn-sm" onClick={() => onApprove(post.id)}>Patvirtinti</button>
+                      <button className="btn btn-danger btn-sm" onClick={() => onNeedsChanges(post.id)}>Reikia pataisymų</button>
+                      <button className="btn btn-neutral btn-sm" onClick={() => onSelectPost(post)}>Peržiūrėti</button>
+                      <button className="btn btn-neutral btn-sm" onClick={() => onDuplicate(post)}>Dublikuoti</button>
                     </div>
                   ) : (
                     <div className="approval-actions">
-                      <button className="btn btn-outline btn-sm" onClick={() => onSelectPost(post)}>👁 Peržiūrėti įrašą</button>
+                      <button className="btn btn-neutral btn-sm" onClick={() => onSelectPost(post)}>Peržiūrėti įrašą</button>
                     </div>
                   )}
                 </div>

@@ -129,6 +129,8 @@
   .btn-success { background:var(--success); color:#fff; }
   .btn-danger { background:var(--danger); color:#fff; }
   .btn-warning { background:var(--warning); color:#fff; }
+  .btn-neutral { background:transparent; color:var(--text-muted); border:1.5px solid var(--border); }
+  .btn-neutral:hover { background:var(--bg); color:var(--text); border-color:var(--text-muted); }
   .notif-btn { position:relative; }
   .notif-dot { position:absolute; top:6px; right:6px; width:8px; height:8px; background:var(--accent); border-radius:50%; border:2px solid #fff; }
   .search-bar {
