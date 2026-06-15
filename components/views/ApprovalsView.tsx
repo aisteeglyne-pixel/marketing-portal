@@ -23,6 +23,7 @@ export default function ApprovalsView({ posts, clientMap, onSelectPost, onApprov
   const [comments, setComments] = useState<Record<string, Comment[]>>({})
   const [commentDrafts, setCommentDrafts] = useState<Record<string, string>>({})
   const [commentTypes, setCommentTypes] = useState<Record<string, 'internal' | 'external'>>({})
+  const [undo, setUndo] = useState<{ postId: string; commentId: string } | null>(null)
   const pendingPosts = posts.filter(p => p.status === 'review')
 
   const approvalPosts = approvalTab === 'done'
@@ -62,18 +63,33 @@ export default function ApprovalsView({ posts, clientMap, onSelectPost, onApprov
     if (data) {
       setComments(prev => ({ ...prev, [postId]: [...(prev[postId] || []), data as any] }))
       setCommentDrafts(prev => ({ ...prev, [postId]: '' }))
-      if (ctype === 'external') showToast('📧 Klientas informuotas el. paštu')
+      if (ctype === 'external') {
+        showToast('📧 Komentaras nusiųstas klientui')
+        const newId = (data as any).id
+        setUndo({ postId, commentId: newId })
+        setTimeout(() => setUndo(u => (u && u.commentId === newId ? null : u)), 6000)
+      }
     }
+  }
+
+  // External komentaro atšaukimas (ištrina ką tik išsiųstą komentarą)
+  async function undoExternal() {
+    if (!undo) return
+    const { postId, commentId } = undo
+    await supabase.from('comments').delete().eq('id', commentId)
+    setComments(prev => ({ ...prev, [postId]: (prev[postId] || []).filter(c => c.id !== commentId) }))
+    setUndo(null)
+    showToast('↩ Atšaukta')
   }
 
   return (
     <div className="view active">
       <div className="approvals-tabs">
-        {([['internal','Vidinė peržiūra'],['client','Kliento tvirtinimas'],['done','Išspręsta']] as const).map(([key, label]) => (
-          <div key={key} className={`approval-tab${approvalTab === key ? ' active' : ''}`} onClick={() => setApprovalTab(key)}>
+        {([['internal','Laukia patvirtinimo'],['client','Patvirtinta'],['done','Išspręsta']] as const).map(([key, label]) => (
+          <button type="button" key={key} className={`approval-tab${approvalTab === key ? ' active' : ''}`} onClick={() => setApprovalTab(key)}>
             {label}
             {key === 'internal' && pendingPosts.length > 0 && <span style={{ marginLeft: 6, background: 'var(--primary)', color: '#fff', fontSize: 10, padding: '1px 6px', borderRadius: 10, fontWeight: 700 }}>{pendingPosts.length}</span>}
-          </div>
+          </button>
         ))}
       </div>
       {approvalPosts.length === 0 ? (
@@ -140,7 +156,13 @@ export default function ApprovalsView({ posts, clientMap, onSelectPost, onApprov
                 {/* Komentarų sekcija */}
                 <div className="comment-section">
                   <div>
-                    {postComments.map(c => (
+                    {postComments.length > 2 && (
+                      <button type="button" onClick={() => onSelectPost(post)}
+                        style={{ background: 'none', border: 'none', color: 'var(--primary)', fontSize: 11, fontWeight: 700, cursor: 'pointer', padding: '0 0 6px' }}>
+                        Rodyti visus ({postComments.length}) →
+                      </button>
+                    )}
+                    {postComments.slice(-2).map(c => (
                       <div key={c.id} className="comment" style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
                         <div className="activity-avatar" style={{ width: 24, height: 24, fontSize: 10, flexShrink: 0 }}>
                           {(((c as any).author?.full_name || (c as any).author?.email || '?') as string).slice(0, 1).toUpperCase()}
@@ -149,7 +171,7 @@ export default function ApprovalsView({ posts, clientMap, onSelectPost, onApprov
                           <div style={{ display: 'flex', gap: 6, alignItems: 'baseline' }}>
                             <span style={{ fontSize: 11, fontWeight: 700 }}>{(c as any).author?.full_name || (c as any).author?.email || 'Nežinomas'}</span>
                             <span className={`comment-badge ${(c as any).comment_type === 'external' ? 'ext-badge' : 'int-badge'}`}>
-                              {(c as any).comment_type === 'external' ? '🌐 External' : '🔒 Internal'}
+                              {(c as any).comment_type === 'external' ? '🌐 Klientui' : '🔒 Vidinis'}
                             </span>
                             <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>{new Date(c.created_at).toLocaleDateString('lt-LT')}</span>
                           </div>
@@ -159,20 +181,34 @@ export default function ApprovalsView({ posts, clientMap, onSelectPost, onApprov
                     ))}
                   </div>
                   <div className="comment-type-row">
-                    <button className={`ctype-btn${ctype === 'internal' ? ' active' : ''}`} onClick={() => setCommentTypes(prev => ({ ...prev, [post.id]: 'internal' }))}>🔒 Internal</button>
-                    <button className={`ctype-btn${ctype === 'external' ? ' active' : ''}`} onClick={() => setCommentTypes(prev => ({ ...prev, [post.id]: 'external' }))}>🌐 External</button>
+                    <button type="button" className={`ctype-btn${ctype === 'internal' ? ' active' : ''}`} onClick={() => setCommentTypes(prev => ({ ...prev, [post.id]: 'internal' }))}>🔒 Vidinis</button>
+                    <button type="button" className={`ctype-btn${ctype === 'external' ? ' active' : ''}`} onClick={() => setCommentTypes(prev => ({ ...prev, [post.id]: 'external' }))}>🌐 Klientui</button>
                   </div>
+                  {ctype === 'external' && (
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#92400E', background: '#FEF3C7', border: '1px solid #FDE68A', borderRadius: 6, padding: '5px 9px', marginBottom: 6 }}>
+                      👁 Klientas tai matys ir gaus el. paštu
+                    </div>
+                  )}
                   <div style={{ display: 'flex', gap: 6, alignItems: 'flex-start', flexWrap: 'wrap' }}>
-                    <input
+                    <textarea
                       className="comment-field"
-                      style={{ flex: 1, minWidth: 160 }}
-                      placeholder="Komentaras…"
+                      rows={2}
+                      style={{ flex: 1, minWidth: 160, resize: 'vertical', fontFamily: 'inherit', ...(ctype === 'external' ? { borderColor: '#F59E0B', background: '#FFFBEB' } : {}) }}
+                      placeholder={ctype === 'external' ? 'Komentaras klientui… (⌘/Ctrl+Enter siųsti)' : 'Vidinis komentaras… (⌘/Ctrl+Enter siųsti)'}
                       value={commentDrafts[post.id] || ''}
                       onChange={e => setCommentDrafts(prev => ({ ...prev, [post.id]: e.target.value }))}
-                      onKeyDown={e => e.key === 'Enter' && submitComment(post.id)}
+                      onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) submitComment(post.id) }}
                     />
-                    <button className="btn btn-outline btn-sm" onClick={() => submitComment(post.id)}>💬 Komentuoti</button>
+                    <button type="button" className={`btn btn-sm ${ctype === 'external' ? 'btn-warning' : 'btn-outline'}`} onClick={() => submitComment(post.id)}>
+                      {ctype === 'external' ? '📧 Siųsti klientui' : '💬 Komentuoti'}
+                    </button>
                   </div>
+                  {undo?.postId === post.id && (
+                    <button type="button" onClick={undoExternal}
+                      style={{ marginTop: 6, background: 'none', border: 'none', color: 'var(--danger)', fontSize: 11, fontWeight: 700, cursor: 'pointer', padding: 0 }}>
+                      ↩ Atšaukti siuntimą klientui
+                    </button>
+                  )}
                 </div>
               </div>
             )

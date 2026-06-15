@@ -1,25 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import { lt } from '@/lib/i18n/lt'
+import { statusLabel } from '@/lib/portal-helpers'
 import type { ContentPost } from '@/types'
-
-const STATUS_COLORS: Record<string, { bg: string; color: string }> = {
-  draft:     { bg: '#F0F0F0', color: '#666' },
-  review:    { bg: '#FEF3C7', color: '#92400E' },
-  approved:  { bg: '#EAF3DE', color: '#27500A' },
-  rejected:  { bg: '#FCEBEB', color: '#791F1F' },
-  published: { bg: '#FCE3F6', color: '#55111D' },
-}
-
-const STATUS_LABELS: Record<string, string> = {
-  draft:     '📝 Juodraštis',
-  review:    '👁 Peržiūrai',
-  approved:  '✓ Patvirtinta',
-  rejected:  '✗ Atmesta',
-  published: '✓ Paskelbta',
-}
 
 const PLATFORM_COLORS: Record<string, string> = {
   Instagram: '#E1306C',
@@ -59,6 +44,7 @@ export default function PostModal({ post, clientId, role, onClose, onUpdate }: P
   const [submittingComment, setSubmittingComment] = useState(false)
   const [actionLoading, setActionLoading] = useState<'approve' | 'reject' | null>(null)
   const [currentStatus, setCurrentStatus] = useState(post.status)
+  const dialogRef = useRef<HTMLDivElement>(null)
 
   // Buffer
   const [bufferProfiles, setBufferProfiles] = useState<BufferProfile[]>([])
@@ -67,6 +53,14 @@ export default function PostModal({ post, clientId, role, onClose, onUpdate }: P
   const [scheduleDate, setScheduleDate] = useState('')
   const [scheduling, setScheduling] = useState(false)
   const [scheduleMsg, setScheduleMsg] = useState('')
+
+  // Escape uždaro langą + fokusas ant dialogo (klaviatūros prieinamumas)
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', onKey)
+    dialogRef.current?.focus()
+    return () => document.removeEventListener('keydown', onKey)
+  }, [])
 
   useEffect(() => {
     loadComments()
@@ -107,6 +101,9 @@ export default function PostModal({ post, clientId, role, onClose, onUpdate }: P
       content_post_id: post.id,
       author_id: authData.user?.id ?? null,
       text: commentText.trim(),
+      // Kliento komentaras privalo būti 'external' — kitaip RLS jį blokuoja
+      // (stulpelio default 'internal'), ir klientas nematytų net savo komentaro.
+      comment_type: role === 'client' ? 'external' : 'internal',
     })
     setCommentText('')
     await loadComments()
@@ -152,7 +149,6 @@ export default function PostModal({ post, clientId, role, onClose, onUpdate }: P
     setScheduling(false)
   }
 
-  const statusStyle = STATUS_COLORS[currentStatus] || STATUS_COLORS.draft
   const platformColor = PLATFORM_COLORS[post.platform] || '#999'
   const isVideo = post.media_url?.match(/\.(mp4|mov|webm)$/i)
 
@@ -162,10 +158,10 @@ export default function PostModal({ post, clientId, role, onClose, onUpdate }: P
       zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center',
       padding: '1rem',
     }}>
-      <div onClick={e => e.stopPropagation()} style={{
+      <div ref={dialogRef} onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={post.title} tabIndex={-1} style={{
         background: '#fff', borderRadius: 16, width: '100%', maxWidth: 900,
         maxHeight: '92vh', overflow: 'hidden', display: 'flex', flexDirection: 'column',
-        boxShadow: '0 24px 80px rgba(0,0,0,0.2)',
+        boxShadow: '0 24px 80px rgba(0,0,0,0.2)', outline: 'none',
       }}>
 
         {/* Header */}
@@ -184,11 +180,8 @@ export default function PostModal({ post, clientId, role, onClose, onUpdate }: P
                 {post.title}
               </div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 2 }}>
-                <span style={{
-                  ...statusStyle, padding: '1px 8px', borderRadius: 10,
-                  fontSize: 11, fontWeight: 500,
-                }}>
-                  {STATUS_LABELS[currentStatus] || currentStatus}
+                <span className={`status-badge status-${currentStatus}`}>
+                  <span className="status-dot"></span>{statusLabel(currentStatus)}
                 </span>
                 <span style={{ fontSize: 11, color: '#aaa' }}>
                   {post.publish_date
@@ -198,7 +191,7 @@ export default function PostModal({ post, clientId, role, onClose, onUpdate }: P
               </div>
             </div>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: '#bbb', padding: '4px 8px', flexShrink: 0, lineHeight: 1 }}>
+          <button onClick={onClose} aria-label="Uždaryti" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: '#888', padding: '4px 8px', flexShrink: 0, lineHeight: 1 }}>
             ✕
           </button>
         </div>
@@ -252,23 +245,17 @@ export default function PostModal({ post, clientId, role, onClose, onUpdate }: P
                 </p>
                 <div style={{ display: 'flex', gap: 8 }}>
                   <button
+                    className="btn btn-success"
                     onClick={() => handleStatusChange('approved')}
                     disabled={actionLoading !== null}
-                    style={{
-                      flex: 1, padding: '10px', borderRadius: 8, border: 'none',
-                      background: actionLoading === 'approve' ? '#d4edda' : '#EAF3DE',
-                      color: '#27500A', fontWeight: 600, fontSize: 14, cursor: 'pointer',
-                    }}>
+                    style={{ flex: 1, justifyContent: 'center', padding: '10px', fontSize: 14 }}>
                     {actionLoading === 'approve' ? '...' : '✓ Patvirtinti'}
                   </button>
                   <button
+                    className="btn btn-danger"
                     onClick={() => handleStatusChange('rejected')}
                     disabled={actionLoading !== null}
-                    style={{
-                      flex: 1, padding: '10px', borderRadius: 8, border: 'none',
-                      background: actionLoading === 'reject' ? '#fcd9d9' : '#FCEBEB',
-                      color: '#791F1F', fontWeight: 600, fontSize: 14, cursor: 'pointer',
-                    }}>
+                    style={{ flex: 1, justifyContent: 'center', padding: '10px', fontSize: 14 }}>
                     {actionLoading === 'reject' ? '...' : '✗ Atmesti'}
                   </button>
                 </div>
@@ -312,7 +299,7 @@ export default function PostModal({ post, clientId, role, onClose, onUpdate }: P
                     <input type="datetime-local" value={scheduleDate} onChange={e => setScheduleDate(e.target.value)}
                       style={{ padding: '8px 10px', border: '1px solid #e5e5e5', borderRadius: 8, fontSize: 13 }} />
                     <button onClick={handleSchedule} disabled={scheduling || !selectedProfile}
-                      style={{ padding: '9px', borderRadius: 8, border: 'none', background: 'var(--brand-600)', color: '#fff', fontWeight: 600, fontSize: 13, cursor: 'pointer' }}>
+                      style={{ padding: '9px', borderRadius: 8, border: 'none', background: 'var(--primary)', color: '#fff', fontWeight: 600, fontSize: 13, cursor: 'pointer' }}>
                       {scheduling ? '⏳ Planuojama...' : '📤 Suplanuoti'}
                     </button>
                     {scheduleMsg && (
@@ -337,9 +324,10 @@ export default function PostModal({ post, clientId, role, onClose, onUpdate }: P
                 </div>
                 <div style={{ fontSize: 13, color: '#666', marginBottom: 10 }}>Laukiama kliento patvirtinimo</div>
                 <button
+                  className="btn btn-success"
                   onClick={() => handleStatusChange('approved')}
                   disabled={actionLoading !== null}
-                  style={{ width: '100%', padding: '9px', borderRadius: 8, border: 'none', background: '#EAF3DE', color: '#27500A', fontWeight: 600, fontSize: 13, cursor: 'pointer' }}>
+                  style={{ width: '100%', justifyContent: 'center', padding: '9px', fontSize: 13 }}>
                   {actionLoading === 'approve' ? '...' : '✓ Patvirtinti agentūros vardu'}
                 </button>
               </div>
@@ -382,19 +370,20 @@ export default function PostModal({ post, clientId, role, onClose, onUpdate }: P
                 )}
               </div>
 
-              <div style={{ display: 'flex', gap: 8 }}>
-                <input
-                  type="text"
+              <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
+                <textarea
                   value={commentText}
+                  rows={2}
                   onChange={e => setCommentText(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && !e.shiftKey && submitComment()}
-                  placeholder="Rašyti komentarą..."
-                  style={{ flex: 1, padding: '8px 12px', border: '1px solid #e5e5e5', borderRadius: 8, fontSize: 13, outline: 'none' }}
+                  onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) submitComment() }}
+                  placeholder="Rašyti komentarą… (⌘/Ctrl+Enter — siųsti)"
+                  style={{ flex: 1, padding: '8px 12px', border: '1px solid #e5e5e5', borderRadius: 8, fontSize: 13, outline: 'none', resize: 'vertical', fontFamily: 'inherit' }}
                 />
                 <button
                   onClick={submitComment}
+                  aria-label="Siųsti komentarą"
                   disabled={submittingComment || !commentText.trim()}
-                  style={{ padding: '8px 14px', borderRadius: 8, border: 'none', background: 'var(--brand-600)', color: '#fff', fontSize: 13, cursor: 'pointer' }}>
+                  style={{ padding: '8px 14px', borderRadius: 8, border: 'none', background: 'var(--primary)', color: '#fff', fontSize: 13, cursor: 'pointer' }}>
                   ↑
                 </button>
               </div>

@@ -275,7 +275,7 @@
 
   /* ===== APPROVALS ===== */
   .approvals-tabs { display:flex; gap:0; margin-bottom:20px; background:var(--surface); border-radius:var(--radius); padding:4px; box-shadow:var(--shadow); border:1px solid var(--border); width:fit-content; }
-  .approval-tab { padding:8px 20px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; color:var(--text-muted); transition:all 0.15s; }
+  .approval-tab { padding:8px 20px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; color:var(--text-muted); transition:all 0.15s; border:none; background:transparent; font-family:inherit; }
   .approval-tab.active { background:var(--primary); color:#fff; }
   .approvals-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
   .approval-card { background:var(--surface); border-radius:var(--radius); box-shadow:var(--shadow); border:1px solid var(--border); overflow:hidden; }
