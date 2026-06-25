@@ -4,7 +4,9 @@ import { useState, useEffect } from 'react'
 import type { CSSProperties } from 'react'
 import { createClient } from '@/lib/supabase'
 import { clientColor, fmtDate } from '@/lib/portal-helpers'
-import type { Client, Project, Task, FileRecord, Subtask } from '@/types'
+import type { Client, Project, Task, FileRecord, Subtask, Tag, TaskDependency } from '@/types'
+
+const TAG_PALETTE = ['#6c63ff', '#E1306C', '#0A66C2', '#22C55E', '#F59E0B', '#06B6D4', '#A855F7', '#EF4444']
 
 const FILE_ICONS: Record<string, string> = { video: '🎬', photo: '🖼️', doc: '📄', brand: '🎨' }
 
@@ -59,6 +61,13 @@ export default function ProjectsView({ profile, clients, team, projects, tasks, 
   const [detailLoading, setDetailLoading] = useState(false)
   const [newSubtask, setNewSubtask] = useState('')
   const [commentDraft, setCommentDraft] = useState('')
+  // „...“ meniu + žymos / priklausomybės / failai
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [allTags, setAllTags] = useState<Tag[]>([])
+  const [taskTagIds, setTaskTagIds] = useState<string[]>([])
+  const [taskFileIds, setTaskFileIds] = useState<string[]>([])
+  const [deps, setDeps] = useState<TaskDependency[]>([])
+  const [newTag, setNewTag] = useState('')
 
   const agencyTeam = team.filter(m => m.role !== 'client')
   const activeProj = projects.find(p => p.id === activeProjId) || null
@@ -112,6 +121,7 @@ export default function ProjectsView({ profile, clients, team, projects, tasks, 
 
   function openTask(t: Partial<Task>) {
     setSubtasks([]); setComments([]); setNewSubtask(''); setCommentDraft('')
+    setTaskTagIds([]); setTaskFileIds([]); setDeps([]); setMenuOpen(false); setNewTag('')
     setTaskModal(t)
   }
 
@@ -119,20 +129,46 @@ export default function ProjectsView({ profile, clients, team, projects, tasks, 
     openTask({ title: '', description: '', status: col, priority: 'medium', assigned_to: profile.id, due_date: '', project_id: isMy ? (projects[0]?.id || null) : activeProjId })
   }
 
-  // Užkrauna subtasks + komentarus, kai atidaroma egzistuojanti užduotis
+  // Agentūros žymos — užkraunamos kartą
+  useEffect(() => {
+    if (!profile?.agency_id) return
+    supabase.from('tags').select('*').eq('agency_id', profile.agency_id).order('name')
+      .then(({ data }) => setAllTags((data as Tag[]) || []))
+  }, [profile?.agency_id])
+
+  // Gilioji nuoroda ?task=<id> — atidaro užduotį
+  useEffect(() => {
+    if (typeof window === 'undefined' || tasks.length === 0) return
+    const id = new URLSearchParams(window.location.search).get('task')
+    if (!id) return
+    const t = tasks.find(x => x.id === id)
+    if (t) {
+      if (t.project_id) { setActiveProjId(t.project_id); setActiveTab('board') }
+      openTask(t)
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+  }, [tasks])
+
+  // Užkrauna subtasks + komentarus + žymas + failus + priklausomybes, kai atidaroma užduotis
   useEffect(() => {
     const id = taskModal?.id
-    if (!id) { setSubtasks([]); setComments([]); return }
+    if (!id) { setSubtasks([]); setComments([]); setTaskTagIds([]); setTaskFileIds([]); setDeps([]); return }
     let cancelled = false
     setDetailLoading(true)
     ;(async () => {
-      const [{ data: subs }, { data: cmts }] = await Promise.all([
+      const [{ data: subs }, { data: cmts }, { data: tt }, { data: tf }, { data: dp }] = await Promise.all([
         supabase.from('subtasks').select('*').eq('task_id', id).order('sort_order').order('created_at'),
         supabase.from('comments').select('id, text, created_at, author:profiles(full_name, email)').eq('task_id', id).order('created_at'),
+        supabase.from('task_tags').select('tag_id').eq('task_id', id),
+        supabase.from('task_files').select('file_id').eq('task_id', id),
+        supabase.from('task_dependencies').select('*').eq('task_id', id),
       ])
       if (cancelled) return
       setSubtasks((subs as Subtask[]) || [])
       setComments((cmts as any as TaskComment[]) || [])
+      setTaskTagIds(((tt as { tag_id: string }[]) || []).map(x => x.tag_id))
+      setTaskFileIds(((tf as { file_id: string }[]) || []).map(x => x.file_id))
+      setDeps((dp as TaskDependency[]) || [])
       setDetailLoading(false)
     })()
     return () => { cancelled = true }
@@ -184,6 +220,97 @@ export default function ProjectsView({ profile, clients, team, projects, tasks, 
     if (error) { showToast('⚠️ ' + error.message); return }
     onTaskUpdated(data); setTaskModal(m => ({ ...m, status: next }))
     if (next === 'done') showToast('✅ Užduotis atlikta!')
+  }
+
+  // ===== „...“ meniu veiksmai =====
+  async function duplicateTask() {
+    setMenuOpen(false)
+    if (!taskModal?.id) return
+    const { data, error } = await supabase.from('tasks').insert({
+      agency_id: profile.agency_id, client_id: taskModal.client_id || null, project_id: taskModal.project_id || null,
+      title: (taskModal.title || '') + ' (kopija)', description: taskModal.description || null,
+      status: 'backlog', priority: taskModal.priority || 'medium', assigned_to: taskModal.assigned_to || null,
+      due_date: taskModal.due_date || null, type: 'agency_task', created_by: profile.id,
+    }).select().single()
+    if (error) { showToast('⚠️ ' + error.message); return }
+    onTaskCreated(data); showToast('📋 Užduotis dubliuota'); openTask(data)
+  }
+
+  async function createFollowUp() {
+    setMenuOpen(false)
+    if (!taskModal?.id) return
+    const { data, error } = await supabase.from('tasks').insert({
+      agency_id: profile.agency_id, client_id: taskModal.client_id || null, project_id: taskModal.project_id || null,
+      title: 'Tęsinys: ' + (taskModal.title || ''), status: 'backlog', priority: taskModal.priority || 'medium',
+      assigned_to: taskModal.assigned_to || null, type: 'agency_task', created_by: profile.id,
+    }).select().single()
+    if (error) { showToast('⚠️ ' + error.message); return }
+    // Tęsinys laukia originalo
+    await supabase.from('task_dependencies').insert({ agency_id: profile.agency_id, task_id: data.id, depends_on: taskModal.id })
+    onTaskCreated(data); showToast('↪ Tęsinio užduotis sukurta'); openTask(data)
+  }
+
+  function copyTaskLink() {
+    setMenuOpen(false)
+    if (!taskModal?.id) return
+    const url = `${window.location.origin}${window.location.pathname}?task=${taskModal.id}`
+    navigator.clipboard?.writeText(url)
+    showToast('🔗 Nuoroda nukopijuota')
+  }
+
+  // ===== Žymos =====
+  async function addTag() {
+    const name = newTag.trim()
+    if (!name || !taskModal?.id) { if (!taskModal?.id) showToast('⚠️ Pirma išsaugok užduotį'); return }
+    let tag = allTags.find(t => t.name.toLowerCase() === name.toLowerCase())
+    if (!tag) {
+      const color = TAG_PALETTE[allTags.length % TAG_PALETTE.length]
+      const { data, error } = await supabase.from('tags').insert({ agency_id: profile.agency_id, name, color }).select().single()
+      if (error) { showToast('⚠️ ' + error.message); return }
+      tag = data as Tag; setAllTags(prev => [...prev, tag as Tag])
+    }
+    if (taskTagIds.includes(tag.id)) { setNewTag(''); return }
+    const { error: e2 } = await supabase.from('task_tags').insert({ agency_id: profile.agency_id, task_id: taskModal.id, tag_id: tag.id })
+    if (e2) { showToast('⚠️ ' + e2.message); return }
+    setTaskTagIds(prev => [...prev, (tag as Tag).id]); setNewTag('')
+  }
+
+  async function removeTag(tagId: string) {
+    if (!taskModal?.id) return
+    const { error } = await supabase.from('task_tags').delete().eq('task_id', taskModal.id).eq('tag_id', tagId)
+    if (error) { showToast('⚠️ ' + error.message); return }
+    setTaskTagIds(prev => prev.filter(x => x !== tagId))
+  }
+
+  // ===== Failai =====
+  async function attachFile(fileId: string) {
+    if (!fileId || !taskModal?.id || taskFileIds.includes(fileId)) return
+    const { error } = await supabase.from('task_files').insert({ agency_id: profile.agency_id, task_id: taskModal.id, file_id: fileId })
+    if (error) { showToast('⚠️ ' + error.message); return }
+    setTaskFileIds(prev => [...prev, fileId])
+  }
+
+  async function detachFile(fileId: string) {
+    if (!taskModal?.id) return
+    const { error } = await supabase.from('task_files').delete().eq('task_id', taskModal.id).eq('file_id', fileId)
+    if (error) { showToast('⚠️ ' + error.message); return }
+    setTaskFileIds(prev => prev.filter(x => x !== fileId))
+  }
+
+  // ===== Priklausomybės =====
+  async function addDependency(depId: string) {
+    if (!depId || !taskModal?.id) return
+    if (depId === taskModal.id || deps.some(d => d.depends_on === depId)) return
+    const { data, error } = await supabase.from('task_dependencies')
+      .insert({ agency_id: profile.agency_id, task_id: taskModal.id, depends_on: depId }).select().single()
+    if (error) { showToast('⚠️ ' + error.message); return }
+    setDeps(prev => [...prev, data as TaskDependency])
+  }
+
+  async function removeDependency(id: string) {
+    const { error } = await supabase.from('task_dependencies').delete().eq('id', id)
+    if (error) { showToast('⚠️ ' + error.message); return }
+    setDeps(prev => prev.filter(d => d.id !== id))
   }
 
   async function saveTask() {
@@ -529,7 +656,37 @@ export default function ProjectsView({ profile, clients, team, projects, tasks, 
                 ✓ {done ? 'Atlikta' : 'Žymėti atlikta'}
               </button>
               <div style={{ flex: 1 }} />
-              {taskModal.id && <button className="btn btn-sm" style={{ background: '#FEE2E2', color: '#DC2626', border: 'none' }} onClick={deleteTask}>🗑 Ištrinti</button>}
+              {taskModal.id && (
+                <div style={{ position: 'relative' }}>
+                  <button className="btn btn-ghost" onClick={() => setMenuOpen(v => !v)} style={{ fontSize: 18, fontWeight: 800, padding: '4px 10px' }}>⋯</button>
+                  {menuOpen && (
+                    <>
+                      <div onClick={() => setMenuOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 3 }} />
+                      <div style={{ position: 'absolute', right: 0, top: '110%', zIndex: 4, width: 240, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, boxShadow: 'var(--shadow)', padding: 6 }}>
+                        {[
+                          { icon: '📋', label: 'Dubliuoti užduotį', fn: duplicateTask },
+                          { icon: '↪', label: 'Sukurti tęsinį', fn: createFollowUp },
+                          { icon: '🔗', label: 'Kopijuoti nuorodą', fn: copyTaskLink },
+                        ].map(it => (
+                          <div key={it.label} onClick={it.fn}
+                            style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 7, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+                            onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg)')}
+                            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                            <span style={{ width: 16, textAlign: 'center' }}>{it.icon}</span>{it.label}
+                          </div>
+                        ))}
+                        <div style={{ height: 1, background: 'var(--border)', margin: '5px 4px' }} />
+                        <div onClick={() => { setMenuOpen(false); deleteTask() }}
+                          style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 7, fontSize: 13, fontWeight: 600, cursor: 'pointer', color: '#DC2626' }}
+                          onMouseEnter={e => (e.currentTarget.style.background = '#FEE2E2')}
+                          onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                          <span style={{ width: 16, textAlign: 'center' }}>🗑</span>Ištrinti užduotį
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
               <button className="btn btn-ghost" onClick={() => setTaskModal(null)}>✕</button>
             </div>
 
@@ -612,6 +769,76 @@ export default function ProjectsView({ profile, clients, team, projects, tasks, 
                   </div>
                 )}
               </div>
+
+              {/* Žymos / Priklausomybės / Failai — tik išsaugotai užduočiai */}
+              {taskModal.id && (() => {
+                const myTags = allTags.filter(t => taskTagIds.includes(t.id))
+                const clientFiles = files.filter(f => f.client_id === taskModal.client_id)
+                const attached = files.filter(f => taskFileIds.includes(f.id))
+                const depTasks = tasks.filter(t => t.id !== taskModal.id && !deps.some(d => d.depends_on === t.id))
+                return (
+                  <>
+                    {/* Žymos */}
+                    <div style={{ marginTop: 20 }}>
+                      <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 8 }}>Žymos</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        {myTags.map(t => (
+                          <span key={t.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '3px 9px', borderRadius: 14, fontSize: 12, fontWeight: 700, background: `${t.color}22`, color: t.color }}>
+                            {t.name}
+                            <span onClick={() => removeTag(t.id)} style={{ cursor: 'pointer', opacity: 0.7 }}>✕</span>
+                          </span>
+                        ))}
+                        <input value={newTag} onChange={e => setNewTag(e.target.value)} onKeyDown={e => e.key === 'Enter' && addTag()} placeholder="+ žyma" list="tag-list"
+                          style={{ border: '1px dashed var(--border)', background: 'transparent', borderRadius: 14, padding: '4px 10px', fontSize: 12, outline: 'none', width: 110 }} />
+                        <datalist id="tag-list">
+                          {allTags.filter(t => !taskTagIds.includes(t.id)).map(t => <option key={t.id} value={t.name} />)}
+                        </datalist>
+                      </div>
+                    </div>
+
+                    {/* Priklausomybės */}
+                    <div style={{ marginTop: 18 }}>
+                      <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 8 }}>Priklausomybės <span className="text-muted" style={{ fontWeight: 400, fontSize: 11 }}>— laukia, kol bus atlikta</span></div>
+                      {deps.map(d => {
+                        const dt = tasks.find(t => t.id === d.depends_on)
+                        return (
+                          <div key={d.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0', fontSize: 13 }}>
+                            <span>{dt?.status === 'done' ? '✅' : '⛔'}</span>
+                            <span style={{ flex: 1, textDecoration: dt?.status === 'done' ? 'line-through' : 'none', color: dt?.status === 'done' ? 'var(--text-muted)' : 'var(--text)' }}>{dt?.title || '(ištrinta užduotis)'}</span>
+                            <button onClick={() => removeDependency(d.id)} style={{ border: 'none', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 13 }}>✕</button>
+                          </div>
+                        )
+                      })}
+                      <select className="select-box" style={{ fontSize: 12, marginTop: 4, maxWidth: 320 }} value="" onChange={e => { addDependency(e.target.value); e.target.value = '' }}>
+                        <option value="">+ Pridėti priklausomybę...</option>
+                        {depTasks.map(t => <option key={t.id} value={t.id}>{t.title}</option>)}
+                      </select>
+                    </div>
+
+                    {/* Prijungti failai */}
+                    <div style={{ marginTop: 18 }}>
+                      <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 8 }}>Prijungti failai</div>
+                      {!taskModal.client_id ? (
+                        <div className="text-muted" style={{ fontSize: 12, fontStyle: 'italic' }}>Užduotis be kliento — failų bibliotekos nėra.</div>
+                      ) : (
+                        <>
+                          {attached.map(f => (
+                            <div key={f.id} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '5px 0', fontSize: 13 }}>
+                              <span style={{ fontSize: 16 }}>{FILE_ICONS[f.file_type] || '📎'}</span>
+                              <a href={f.file_url} target="_blank" rel="noopener noreferrer" style={{ flex: 1, color: 'var(--text)', textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.file_name}</a>
+                              <button onClick={() => detachFile(f.id)} style={{ border: 'none', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 13 }}>✕</button>
+                            </div>
+                          ))}
+                          <select className="select-box" style={{ fontSize: 12, marginTop: 4, maxWidth: 320 }} value="" onChange={e => { attachFile(e.target.value); e.target.value = '' }}>
+                            <option value="">+ Prijungti failą iš bibliotekos...</option>
+                            {clientFiles.filter(f => !taskFileIds.includes(f.id)).map(f => <option key={f.id} value={f.id}>{f.file_name}</option>)}
+                          </select>
+                        </>
+                      )}
+                    </div>
+                  </>
+                )
+              })()}
 
               {/* Komentarai */}
               <div style={{ marginTop: 22, borderTop: '1px solid var(--border)', paddingTop: 16 }}>

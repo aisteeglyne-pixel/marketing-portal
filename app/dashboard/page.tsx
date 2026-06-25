@@ -58,6 +58,12 @@ export default function PortalPage() {
   useEffect(() => { activeViewRef.current = activeView }, [activeView])
 
   useEffect(() => {
+    if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('task')) {
+      setActiveView('projects')
+    }
+  }, [])
+
+  useEffect(() => {
     async function load() {
       const { data: authData } = await supabase.auth.getUser()
       const user = authData.user

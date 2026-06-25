@@ -105,6 +105,22 @@ export interface Subtask {
   created_at: string
 }
 
+export interface Tag {
+  id: string
+  agency_id: string
+  name: string
+  color: string
+  created_at: string
+}
+
+export interface TaskDependency {
+  id: string
+  agency_id: string
+  task_id: string
+  depends_on: string
+  created_at: string
+}
+
 export interface ChatChannel {
   id: string
   agency_id: string

@@ -21,11 +21,6 @@ export default function CreatePostModal({ agencyId, clients, activeClient, onClo
   const [mediaError, setMediaError] = useState('')
   const [dragOver, setDragOver] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  // AI modalas
-  const [showAiModal, setShowAiModal] = useState(false)
-  const [aiTopic, setAiTopic] = useState('')
-  const [aiCategory, setAiCategory] = useState<'promo' | 'edu' | 'inspo' | 'community'>('promo')
-  const [aiSuggestions, setAiSuggestions] = useState<string[]>([])
 
   async function handleCreate(status: 'draft' | 'review' | 'approved' | 'scheduled') {
     if (!newPost.title || creatingStatus) return
@@ -66,35 +61,6 @@ export default function CreatePostModal({ agencyId, clients, activeClient, onClo
     setUploadingMedia(false)
   }
 
-  // Demo AI generatorius — šablonai pagal kategoriją; vėliau pakeisim tikru AI API
-  function generateAiCaptions() {
-    const topic = aiTopic.trim() || 'mūsų naujienos'
-    const cap = topic[0].toUpperCase() + topic.slice(1)
-    const tpl: Record<string, string[]> = {
-      promo: [
-        `🎯 ${topic} — jau čia! Nepraleisk progos sužinoti daugiau. Nuoroda bio. 👆`,
-        `Naujiena! ✨ ${cap}. Riboto laiko pasiūlymas — sek mus, kad nepraleistum.`,
-        `${cap} 🔥 Kodėl visi apie tai kalba? Sužinok pirmas — spausk nuorodą.`,
-      ],
-      edu: [
-        `💡 Ar žinojai? ${cap} — štai ką svarbu suprasti. Išsaugok šį įrašą ateičiai! 📌`,
-        `3 dalykai, kuriuos verta žinoti apie: ${topic}. Skaityk toliau ir pasidalink su tuo, kam aktualu. 👇`,
-        `Trumpai ir aiškiai: ${topic}. Jei buvo naudinga — palik ❤️ ir sek daugiau tokio turinio.`,
-      ],
-      inspo: [
-        `✨ ${cap} primena: didžiausi pokyčiai prasideda nuo mažų žingsnių. Koks tavo šiandienos žingsnis?`,
-        `Pirmadienio mintis 💭 ${cap}. Pažymėk žmogų, kuriam to reikia šiandien.`,
-        `Kartais užtenka vieno sprendimo. ${cap} — pradėk šiandien. 🚀`,
-      ],
-      community: [
-        `👋 Mūsų bendruomenei: ${topic}! Ačiū, kad esate kartu — parašykit komentaruose, ką manote. 💬`,
-        `Užkulisiai 🎬 ${cap}. Mums smalsu — ko norėtumėt pamatyti daugiau?`,
-        `Šventė! 🎉 ${cap}. Be jūsų to nebūtų — dėkojam kiekvienam! ❤️`,
-      ],
-    }
-    setAiSuggestions(tpl[aiCategory])
-  }
-
   const isVideoUrl = (url: string) => !!url.match(/\.(mp4|mov|webm)/i)
 
   return (
@@ -132,12 +98,6 @@ export default function CreatePostModal({ agencyId, clients, activeClient, onClo
                   ))}
                 </div>
               </div>
-              {/* AI bar */}
-              <div className="ai-bar" style={{ cursor: 'pointer' }} onClick={() => { setAiSuggestions([]); setAiTopic(newPost.title); setShowAiModal(true) }}>
-                <span style={{ fontSize: 18 }}>✨</span>
-                <span className="ai-label">Generuoti su AI — geresni tekstai per sekundes</span>
-                <span className="ai-chip">AI</span>
-              </div>
               {/* Title */}
               <div className="form-group">
                 <label className="form-label">Pavadinimas</label>
@@ -151,7 +111,7 @@ export default function CreatePostModal({ agencyId, clients, activeClient, onClo
                     {newPost.platform} · {newPost.caption.length.toLocaleString('lt-LT')} / {(CHAR_LIMITS[newPost.platform] || 2200).toLocaleString('lt-LT')}
                   </span>
                 </label>
-                <textarea className="form-input" rows={4} value={newPost.caption} onChange={e => setNewPost(p => ({ ...p, caption: e.target.value }))} placeholder="Rašykite tekstą arba generuokite su AI..." style={{ resize: 'vertical', fontFamily: 'inherit' }} />
+                <textarea className="form-input" rows={4} value={newPost.caption} onChange={e => setNewPost(p => ({ ...p, caption: e.target.value }))} placeholder="Rašykite tekstą..." style={{ resize: 'vertical', fontFamily: 'inherit' }} />
               </div>
               {/* Media upload */}
               <div className="form-group">
@@ -241,55 +201,6 @@ export default function CreatePostModal({ agencyId, clients, activeClient, onClo
           </div>
         </div>
       </div>
-
-      {/* AI caption modalas */}
-      {showAiModal && (
-        <div className="modal-overlay" style={{ display: 'flex', zIndex: 110 }} onClick={e => { if (e.target === e.currentTarget) setShowAiModal(false) }}>
-          <div className="modal" style={{ width: 560, maxHeight: '88vh', display: 'flex', flexDirection: 'column' }}>
-            <div className="modal-header">
-              <span style={{ fontSize: 20 }}>✨</span>
-              <h3 className="modal-title">AI tekstų generatorius</h3>
-              <span style={{ fontSize: 11, fontWeight: 600, color: '#92400E', background: '#FEF3C7', padding: '2px 8px', borderRadius: 20 }}>Demo šablonai</span>
-              <button className="btn btn-ghost" onClick={() => setShowAiModal(false)} style={{ marginLeft: 'auto' }}>✕</button>
-            </div>
-            <div style={{ padding: '20px 24px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <div className="form-group">
-                <label className="form-label">Apie ką šis įrašas?</label>
-                <input className="form-input" value={aiTopic} onChange={e => setAiTopic(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && generateAiCaptions()}
-                  placeholder="pvz. nauja vasaros kolekcija su 20% nuolaida" autoFocus />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Kategorija</label>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                  {([['promo','🎯','Reklaminis'],['edu','📖','Mokomasis'],['inspo','💡','Įkvepiantis'],['community','🎉','Bendruomenei']] as const).map(([key, icon, label]) => (
-                    <div key={key} onClick={() => setAiCategory(key)}
-                      style={{
-                        padding: '10px 12px', borderRadius: 10, cursor: 'pointer', fontSize: 13, fontWeight: 600,
-                        border: aiCategory === key ? '2px solid var(--primary)' : '1px solid var(--border)',
-                        background: aiCategory === key ? 'var(--primary-light)' : 'var(--surface)',
-                      }}>
-                      {icon} {label}
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <button className="btn btn-primary" onClick={generateAiCaptions}>✨ Generuoti tekstus</button>
-              {aiSuggestions.length > 0 && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {aiSuggestions.map((s, i) => (
-                    <div key={i} onClick={() => { setNewPost(p => ({ ...p, caption: s })); setShowAiModal(false) }}
-                      style={{ padding: '12px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg)', fontSize: 13, lineHeight: 1.6, cursor: 'pointer' }}>
-                      {s}
-                      <div style={{ fontSize: 11, color: 'var(--primary)', fontWeight: 600, marginTop: 6 }}>Naudoti šį tekstą →</div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </>
   )
 }

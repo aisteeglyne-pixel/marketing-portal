@@ -46,6 +46,8 @@ export default function AdminView({ profile, clients, team, posts, onOpenClient,
   // Pakvietimas
   const [invClient, setInvClient] = useState('')
   const [invEmail, setInvEmail] = useState('')
+  const [invSaving, setInvSaving] = useState(false)
+  const [invLink, setInvLink] = useState('')
 
   const TABS: [AdminTab, string][] = [
     ['clients', '🏢 Klientai'],
@@ -107,10 +109,22 @@ export default function AdminView({ profile, clients, team, posts, onOpenClient,
     showToast(data.is_active ? '✅ Narys aktyvuotas' : '🚫 Narys deaktyvuotas')
   }
 
-  function sendInvite() {
+  async function sendInvite() {
     if (!invClient) { showToast('⚠️ Pasirink klientą'); return }
-    const c = clients.find(cl => cl.id === invClient)
-    showToast(`📨 Kvietimas „${c?.company_name}" paruoštas (el. laiškai — netrukus)`)
+    if (invSaving) return
+    setInvSaving(true)
+    setInvLink('')
+    const { data, error } = await supabase.from('client_invites').insert({
+      agency_id: profile.agency_id,
+      client_id: invClient,
+      email: invEmail.trim() || null,
+    }).select('token').single()
+    setInvSaving(false)
+    if (error || !data) { showToast('⚠️ ' + (error?.message || 'Nepavyko sukurti pakvietimo')); return }
+    const link = `${window.location.origin}/invite?token=${data.token}`
+    setInvLink(link)
+    navigator.clipboard?.writeText(link).catch(() => {})
+    showToast('🔗 Pakvietimo nuoroda paruošta ir nukopijuota')
   }
 
   const agencyTeam = team.filter(m => m.role !== 'client')
@@ -206,14 +220,23 @@ export default function AdminView({ profile, clients, team, posts, onOpenClient,
               </select>
             </div>
             <div className="form-group">
-              <label className="form-label">El. paštas</label>
+              <label className="form-label">El. paštas <span className="text-muted" style={{ fontWeight: 400 }}>(neprivaloma)</span></label>
               <input className="form-input" value={invEmail} onChange={e => setInvEmail(e.target.value)} placeholder="klientas@imone.lt" />
             </div>
             <div style={{ background: 'var(--bg)', borderRadius: 10, padding: '12px 14px', marginBottom: 14, fontSize: 12, color: 'var(--text-muted)' }}>
-              📧 El. laiškas bus išsiųstas su nuoroda į kliento portalą ir prašymu susikurti profilį.
-              <span style={{ color: 'var(--primary)', fontWeight: 600 }}> Šiuo metu: simuliuojama.</span>
+              🔗 Sukursime unikalią pakvietimo nuorodą (galioja 14 d.). Nukopijuok ją ir nusiųsk klientui — atidaręs jis susikurs slaptažodį ir matys tik savo erdvę.
             </div>
-            <button className="btn btn-primary" onClick={sendInvite}>📨 Siųsti kvietimą</button>
+            <button className="btn btn-primary" disabled={invSaving} onClick={sendInvite}>{invSaving ? '⏳ Kuriama...' : '🔗 Sukurti pakvietimo nuorodą'}</button>
+
+            {invLink && (
+              <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
+                <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 6 }}>✅ Nuoroda paruošta — nusiųsk klientui</div>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <code style={{ flex: 1, fontSize: 11, background: 'var(--bg)', padding: '8px 10px', borderRadius: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{invLink}</code>
+                  <button className="btn btn-outline btn-sm" onClick={() => { navigator.clipboard?.writeText(invLink); showToast('📋 Nuoroda nukopijuota') }}>Kopijuoti</button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
