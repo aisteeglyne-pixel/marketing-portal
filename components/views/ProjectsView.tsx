@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase'
 import { clientColor, fmtDate } from '@/lib/portal-helpers'
 import type { Client, Project, Task, FileRecord, Subtask, Tag, TaskDependency } from '@/types'
 
-const TAG_PALETTE = ['#6c63ff', '#E1306C', '#0A66C2', '#22C55E', '#F59E0B', '#06B6D4', '#A855F7', '#EF4444']
+const TAG_PALETTE = ['#E23DBE', '#E1306C', '#0A66C2', '#22C55E', '#F59E0B', '#06B6D4', '#A855F7', '#EF4444']
 
 const FILE_ICONS: Record<string, string> = { video: '🎬', photo: '🖼️', doc: '📄', brand: '🎨' }
 

@@ -378,7 +378,7 @@ export default function ChatView({ profile, clients, team, onUnreadChange }: Cha
               {grx.map(([emoji, info]) => (
                 <span key={emoji} onClick={() => toggleReaction(m.id, emoji)}
                   style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, padding: '2px 7px', borderRadius: 11, cursor: 'pointer', userSelect: 'none',
-                    background: info.mine ? 'rgba(108,99,255,0.16)' : 'var(--surface)',
+                    background: info.mine ? 'rgba(226,61,190,0.16)' : 'var(--surface)',
                     border: `1px solid ${info.mine ? 'var(--primary)' : 'var(--border)'}` }}>
                   <span>{emoji}</span><span style={{ fontWeight: 700 }}>{info.count}</span>
                 </span>
@@ -389,7 +389,7 @@ export default function ChatView({ profile, clients, team, onUnreadChange }: Cha
           {/* Gijos indikatorius (tik sraute) */}
           {!inThread && reps.length > 0 && (
             <div onClick={() => setThreadRootId(m.id)}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 6, padding: '3px 9px', borderRadius: 8, cursor: 'pointer', fontSize: 12, fontWeight: 700, color: 'var(--primary)', background: 'rgba(108,99,255,0.08)', border: '1px solid rgba(108,99,255,0.25)' }}>
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 6, padding: '3px 9px', borderRadius: 8, cursor: 'pointer', fontSize: 12, fontWeight: 700, color: 'var(--primary)', background: 'rgba(226,61,190,0.08)', border: '1px solid rgba(226,61,190,0.25)' }}>
               💬 {reps.length} {reps.length === 1 ? 'atsakymas' : reps.length < 10 ? 'atsakymai' : 'atsakymų'}
             </div>
           )}
