@@ -160,6 +160,33 @@ export interface FileRecord {
   uploaded_date: string
 }
 
+export interface BrandFont {
+  name: string
+  usage: string
+}
+
+export interface BrandPillar {
+  emoji: string
+  name: string
+  color: string
+}
+
+export interface ClientBrand {
+  id: string
+  agency_id: string
+  client_id: string
+  industry: string | null
+  audience: string | null
+  website: string | null
+  voice: string | null
+  colors: string[]
+  fonts: BrandFont[]
+  hashtags: string[]
+  pillars: BrandPillar[]
+  created_at: string
+  updated_at: string
+}
+
 export interface Goal {
   id: string
   agency_id: string

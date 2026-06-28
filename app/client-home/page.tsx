@@ -10,20 +10,22 @@ import ClientTasksView from '@/components/views/ClientTasksView'
 import ClientFilesView from '@/components/views/ClientFilesView'
 import ClientGoalsView from '@/components/views/ClientGoalsView'
 import ClientReportsView from '@/components/views/ClientReportsView'
-import type { Client, ContentPost, Task, Goal, FileRecord } from '@/types'
+import ClientBrandView from '@/components/views/ClientBrandView'
+import type { Client, ContentPost, Task, Goal, FileRecord, ClientBrand } from '@/types'
 
-type View = 'overview' | 'content' | 'tasks' | 'files' | 'goals' | 'reports'
+type View = 'overview' | 'content' | 'brand' | 'tasks' | 'files' | 'goals' | 'reports'
 
 const NAV: { view: View; icon: string; label: string }[] = [
   { view: 'overview', icon: '🏠', label: 'Apžvalga' },
   { view: 'content', icon: '📝', label: 'Turinys' },
+  { view: 'brand', icon: '🎨', label: 'Brand\'as' },
   { view: 'tasks', icon: '✅', label: 'Užduotys' },
   { view: 'files', icon: '📁', label: 'Failai' },
   { view: 'goals', icon: '🎯', label: 'Tikslai' },
   { view: 'reports', icon: '📊', label: 'Ataskaitos' },
 ]
 const VIEW_TITLES: Record<View, string> = {
-  overview: 'Apžvalga', content: 'Turinys', tasks: 'Užduotys', files: 'Failai', goals: 'Tikslai', reports: 'Ataskaitos',
+  overview: 'Apžvalga', content: 'Turinys', brand: 'Brand\'as', tasks: 'Užduotys', files: 'Failai', goals: 'Tikslai', reports: 'Ataskaitos',
 }
 
 export default function ClientHomePage() {
@@ -33,6 +35,7 @@ export default function ClientHomePage() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [files, setFiles] = useState<FileRecord[]>([])
   const [goals, setGoals] = useState<Goal[]>([])
+  const [brand, setBrand] = useState<ClientBrand | null>(null)
   const [metrics, setMetrics] = useState<any[]>([])
   const [activeView, setActiveView] = useState<View>('overview')
   const [preview, setPreview] = useState(false)
@@ -67,6 +70,7 @@ export default function ClientHomePage() {
         { data: tasksData },
         { data: filesData },
         { data: goalsData },
+        { data: brandData },
         { data: metricsData },
       ] = await Promise.all([
         supabase.from('clients').select('*').eq('id', cid).single(),
@@ -74,6 +78,7 @@ export default function ClientHomePage() {
         supabase.from('tasks').select('*').eq('client_id', cid).order('created_at', { ascending: false }),
         supabase.from('files').select('*').eq('client_id', cid).order('uploaded_date', { ascending: false }),
         supabase.from('goals').select('*').eq('client_id', cid).order('deadline', { ascending: true }),
+        supabase.from('client_brands').select('*').eq('client_id', cid).maybeSingle(),
         supabase.from('metrics_snapshots').select('*').eq('client_id', cid).order('metric_date'),
       ])
       setClient(clientData || null)
@@ -81,6 +86,7 @@ export default function ClientHomePage() {
       setTasks(tasksData || [])
       setFiles(filesData || [])
       setGoals(goalsData || [])
+      setBrand((brandData as ClientBrand) || null)
       setMetrics((metricsData || []).map((s: any) => ({ ...s, value: Number(s.value) })))
       setLoading(false)
     }
@@ -167,6 +173,10 @@ export default function ClientHomePage() {
           )}
           {activeView === 'content' && (
             <ClientContentView clientId={profile.client_id} agencyId={profile.agency_id} posts={posts} preview={preview} onPostsChange={setPosts} />
+          )}
+          {activeView === 'brand' && client && (
+            <ClientBrandView client={client} profile={profile} brand={brand} files={files} role="client"
+              preview={preview} onBrandChange={setBrand} onFilesChange={setFiles} showToast={showToast} />
           )}
           {activeView === 'tasks' && (
             <ClientTasksView profile={profile} tasks={tasks} preview={preview} onTaskCreated={t => setTasks(prev => [t, ...prev])} showToast={showToast} />

@@ -1,23 +1,31 @@
 'use client'
 
+import { useState } from 'react'
 import { PLATFORM_COLORS } from '@/lib/portal-constants'
 import { statusLabel, typeIcon, fmtDate, fmtTime, isVideoUrl, clientColor, clientInitials } from '@/lib/portal-helpers'
-import type { Client, ContentPost, Task } from '@/types'
+import ClientBrandView from '@/components/views/ClientBrandView'
+import type { Client, ContentPost, Task, ClientBrand, FileRecord } from '@/types'
 
 interface ClientWorkspaceViewProps {
   client: Client
+  profile: any
   posts: ContentPost[]
   tasks: Task[]
   team: any[]
+  files: FileRecord[]
+  brand: ClientBrand | null
   onNewPost: () => void
   onSelectPost: (post: ContentPost) => void
   onApprove: (postId: string) => void
   onNeedsChanges: (postId: string) => void
   onTaskDone: (taskId: string) => void
+  onBrandChange: (b: ClientBrand) => void
+  onFilesChange: (files: FileRecord[]) => void
   showToast: (msg: string) => void
 }
 
-export default function ClientWorkspaceView({ client, posts, tasks, team, onNewPost, onSelectPost, onApprove, onNeedsChanges, onTaskDone, showToast }: ClientWorkspaceViewProps) {
+export default function ClientWorkspaceView({ client, profile, posts, tasks, team, files, brand, onNewPost, onSelectPost, onApprove, onNeedsChanges, onTaskDone, onBrandChange, onFilesChange, showToast }: ClientWorkspaceViewProps) {
+  const [tab, setTab] = useState<'overview' | 'brand'>('overview')
   const clientPosts = posts.filter(p => p.client_id === client.id)
   const clientTasks = tasks.filter(t => t.client_id === client.id)
   const color = clientColor(client.company_name)
@@ -46,6 +54,26 @@ export default function ClientWorkspaceView({ client, posts, tasks, team, onNewP
         </div>
       </div>
 
+      {/* Skirtukai */}
+      <div style={{ display: 'flex', gap: 4, marginBottom: 18, borderBottom: '1px solid var(--border)' }}>
+        {([['overview', '📋 Apžvalga'], ['brand', "🎨 Brand'as"]] as const).map(([key, label]) => (
+          <button key={key} onClick={() => setTab(key)}
+            style={{
+              padding: '8px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', background: 'none', border: 'none',
+              color: tab === key ? 'var(--primary)' : 'var(--text-muted)',
+              borderBottom: tab === key ? '2px solid var(--primary)' : '2px solid transparent', marginBottom: -1,
+            }}>{label}</button>
+        ))}
+      </div>
+
+      {tab === 'brand' && (
+        <ClientBrandView
+          client={client} profile={profile} brand={brand} files={files} role="agency"
+          onBrandChange={onBrandChange} onFilesChange={onFilesChange} showToast={showToast}
+        />
+      )}
+
+      {tab === 'overview' && (<>
       {/* Socialiniai profiliai */}
       <div className="social-profiles-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(220px,1fr))', gap: 12, marginBottom: 20 }}>
         {(client.social_channels || []).map(ch => (
@@ -191,6 +219,7 @@ export default function ClientWorkspaceView({ client, posts, tasks, team, onNewP
         </div>
         <button className="btn btn-primary btn-sm" onClick={() => window.open(`/client-home?preview=${client.id}`, '_blank')}>👁️ Simuliuoti {client.company_name}</button>
       </div>
+      </>)}
     </div>
   )
 }

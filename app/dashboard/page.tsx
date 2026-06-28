@@ -13,14 +13,13 @@ import PostsView from '@/components/views/PostsView'
 import ApprovalsView from '@/components/views/ApprovalsView'
 import AnalyticsView from '@/components/views/AnalyticsView'
 import TeamView from '@/components/views/TeamView'
-import BrandHubView from '@/components/views/BrandHubView'
 import ClientWorkspaceView from '@/components/views/ClientWorkspaceView'
 import AdminView from '@/components/views/AdminView'
 import ProjectsView from '@/components/views/ProjectsView'
 import ChatView from '@/components/views/ChatView'
-import type { Client, ContentPost, Task, Project, FileRecord } from '@/types'
+import type { Client, ContentPost, Task, Project, FileRecord, ClientBrand } from '@/types'
 
-type View = 'dashboard' | 'calendar' | 'posts' | 'approvals' | 'analytics' | 'team' | 'brand' | 'client' | 'admin' | 'projects' | 'chat'
+type View = 'dashboard' | 'calendar' | 'posts' | 'approvals' | 'analytics' | 'team' | 'client' | 'admin' | 'projects' | 'chat'
 
 const VIEW_TITLES: Record<View, string> = {
   dashboard: 'Apžvalga',
@@ -29,7 +28,6 @@ const VIEW_TITLES: Record<View, string> = {
   approvals: 'Tvirtinimas',
   analytics: 'Analitika',
   team: 'Komanda',
-  brand: 'Brand Hub',
   client: '',
   admin: 'Admin valdymas',
   projects: 'Projektai',
@@ -44,6 +42,7 @@ export default function PortalPage() {
   const [team, setTeam] = useState<any[]>([])
   const [projects, setProjects] = useState<Project[]>([])
   const [files, setFiles] = useState<FileRecord[]>([])
+  const [brands, setBrands] = useState<ClientBrand[]>([])
   const [activeView, setActiveView] = useState<View>('dashboard')
   const [activeClient, setActiveClient] = useState<Client | null>(null)
   const [loading, setLoading] = useState(true)
@@ -80,6 +79,7 @@ export default function PortalPage() {
         { data: teamData },
         { data: projectsData },
         { data: filesData },
+        { data: brandsData },
       ] = await Promise.all([
         supabase.from('clients').select('*').eq('agency_id', p.agency_id).order('company_name'),
         supabase.from('content_posts').select('*').eq('agency_id', p.agency_id).order('created_at', { ascending: false }),
@@ -87,6 +87,7 @@ export default function PortalPage() {
         supabase.from('profiles').select('*').eq('agency_id', p.agency_id),
         supabase.from('projects').select('*').eq('agency_id', p.agency_id).eq('status', 'active').order('created_at'),
         supabase.from('files').select('*').eq('agency_id', p.agency_id).order('uploaded_date', { ascending: false }),
+        supabase.from('client_brands').select('*').eq('agency_id', p.agency_id),
       ])
       setClients(clientsData || [])
       setPosts(postsData || [])
@@ -94,6 +95,7 @@ export default function PortalPage() {
       setTeam(teamData || [])
       setProjects(projectsData || [])
       setFiles(filesData || [])
+      setBrands(brandsData || [])
       setLoading(false)
     }
     load()
@@ -155,6 +157,9 @@ export default function PortalPage() {
   async function handleSchedule(post: ContentPost) {
     if (!post.publish_date) { showToast('⚠️ Pirma nustatyk datą (per ✏️ koregavimą)'); return }
     await setStatus(post.id, 'scheduled', '🚀 Suplanuota: ' + post.title)
+  }
+  function handleBrandChange(b: ClientBrand) {
+    setBrands(prev => prev.some(x => x.client_id === b.client_id) ? prev.map(x => x.client_id === b.client_id ? b : x) : [...prev, b])
   }
   async function handleTaskDone(taskId: string) {
     await supabase.from('tasks').update({ status: 'done' }).eq('id', taskId)
@@ -260,9 +265,6 @@ export default function PortalPage() {
             <div className={`nav-item${activeView === 'team' && !activeClient ? ' active' : ''}`} onClick={() => navTo('team')}>
               <span className="nav-icon">👥</span> Komanda
             </div>
-            <div className={`nav-item${activeView === 'brand' && !activeClient ? ' active' : ''}`} onClick={() => navTo('brand')}>
-              <span className="nav-icon">🎨</span> Brand Hub
-            </div>
             <div className={`nav-item${activeView === 'admin' && !activeClient ? ' active' : ''}`} onClick={() => navTo('admin')}>
               <span className="nav-icon">⚙️</span> Admin valdymas
             </div>
@@ -322,9 +324,6 @@ export default function PortalPage() {
           {activeView === 'team' && !activeClient && (
             <TeamView team={team} clients={clients} tasks={tasks} showToast={showToast} />
           )}
-          {activeView === 'brand' && !activeClient && (
-            <BrandHubView showToast={showToast} />
-          )}
           {activeView === 'projects' && !activeClient && (
             <ProjectsView
               profile={profile} clients={clients} team={team} projects={projects} tasks={tasks} files={files}
@@ -355,10 +354,12 @@ export default function PortalPage() {
           )}
           {activeView === 'client' && activeClient && (
             <ClientWorkspaceView
-              client={activeClient} posts={posts} tasks={tasks} team={team}
+              client={activeClient} profile={profile} posts={posts} tasks={tasks} team={team}
+              files={files} brand={brands.find(b => b.client_id === activeClient.id) || null}
               onNewPost={() => setShowCreateModal(true)} onSelectPost={setSelectedPost}
               onApprove={handleApprove} onNeedsChanges={handleNeedsChanges}
-              onTaskDone={handleTaskDone} showToast={showToast}
+              onTaskDone={handleTaskDone} onBrandChange={handleBrandChange}
+              onFilesChange={setFiles} showToast={showToast}
             />
           )}
         </div>
